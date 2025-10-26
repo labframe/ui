@@ -1,17 +1,12 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ColDef, GridApi, GridReadyEvent } from "ag-grid-community";
-import {
-  ModuleRegistry,
-  AllCommunityModule,
-  colorSchemeDark,
-  colorSchemeLight,
-  themeQuartz,
-} from "ag-grid-community";
+import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { useThemePreference } from "@/components/theme/theme-provider";
 import type { SampleListItem } from "@/lib/api";
 import { useSamplesQuery } from "@/lib/hooks/use-samples";
 
@@ -22,15 +17,20 @@ export function SamplesPage() {
     useSamplesQuery();
 
   const gridApiRef = useRef<GridApi<SampleListItem> | null>(null);
-  const isDark = typeof window !== "undefined" && document.documentElement.classList.contains("dark");
-  const gridTheme = useMemo(() => {
-    const scheme = isDark ? colorSchemeDark : colorSchemeLight;
-    return themeQuartz.withPart(scheme).withParams({
-      foregroundColor: "var(--foreground)",
-      backgroundColor: "var(--card)",
-      headerBackgroundColor: "var(--muted)",
-    });
-  }, [isDark]);
+  const { resolvedTheme } = useThemePreference();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const isDark = resolvedTheme === "dark";
+  const themeClass = useMemo(() => {
+    if (!isMounted) {
+      return "ag-theme-quartz";
+    }
+    return isDark ? "ag-theme-quartz-dark" : "ag-theme-quartz";
+  }, [isDark, isMounted]);
 
   const columnDefs = useMemo<ColDef<SampleListItem>[]>(
     () => [
@@ -79,12 +79,14 @@ export function SamplesPage() {
       <section className="flex flex-1 flex-col overflow-hidden rounded-lg border bg-card shadow-sm">
         <div style={{ height: 480, width: "100%" }}>
           <AgGridReact<SampleListItem>
+            key={isMounted ? (isDark ? "dark" : "light") : "light"}
             rowData={samples}
             columnDefs={columnDefs}
             defaultColDef={{ sortable: true, filter: true, resizable: true }}
             animateRows
             loading={isLoading || isRefetching}
-            theme={gridTheme}
+            className={themeClass}
+            theme="legacy"
             onGridReady={handleGridReady}
           />
         </div>

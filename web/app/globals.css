@@ -1,15 +1,7 @@
-.ag-theme-alpine {
-  --ag-foreground-color: var(--foreground) !important;
-  --ag-secondary-foreground-color: var(--foreground) !important;
-  --ag-header-foreground-color: var(--foreground) !important;
-  --ag-data-color: var(--foreground) !important;
-  --ag-disabled-foreground-color: color-mix(in srgb, var(--foreground), transparent 50%) !important;
-  --ag-subtle-text-color: color-mix(in srgb, var(--foreground), transparent 30%) !important;
-}
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "ag-grid-community/styles/ag-grid.css";
-@import "ag-grid-community/styles/ag-theme-alpine.css";
+@import "ag-grid-community/styles/ag-theme-quartz.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -131,32 +123,63 @@
   }
 }
 
-.ag-theme-alpine,
-.ag-theme-alpine *,
-.ag-theme-alpine {
+.ag-theme-quartz {
   --ag-foreground-color: var(--foreground);
-  --ag-secondary-foreground-color: var(--foreground);
+  --ag-secondary-foreground-color: color-mix(in srgb, var(--foreground), transparent 35%);
   --ag-data-color: var(--foreground);
+  --ag-background-color: var(--card);
+  --ag-header-background-color: var(--card);
   --ag-header-foreground-color: var(--foreground);
+  --ag-row-background-color: var(--card);
+  --ag-even-row-background-color: var(--card);
+  --ag-odd-row-background-color: var(--card);
+  --ag-row-hover-color: color-mix(in srgb, var(--primary) 12%, var(--card));
+  --ag-row-border-color: color-mix(in srgb, var(--border) 70%, transparent);
+  --ag-border-color: color-mix(in srgb, var(--border) 75%, transparent);
+  --ag-active-color: var(--primary);
+  --ag-selected-row-background-color: color-mix(in srgb, var(--primary) 15%, var(--card));
+  --ag-selected-row-foreground-color: var(--primary-foreground);
+  --ag-control-panel-background-color: var(--card);
+  --ag-subheader-toolbar-background-color: var(--card);
+  --ag-checkbox-background-color: var(--card);
+  --ag-widget-container-horizontal-padding: 0.75rem;
 }
 
-.ag-theme-alpine .ag-root,
-.ag-theme-alpine .ag-root-wrapper,
-.ag-theme-alpine .ag-center-cols-container,
-.ag-theme-alpine .ag-center-cols-viewport,
-.ag-theme-alpine .ag-row,
-.ag-theme-alpine .ag-cell,
-.ag-theme-alpine .ag-cell-value,
-.ag-theme-alpine .ag-header,
-.ag-theme-alpine .ag-header-cell,
-.ag-theme-alpine .ag-header-cell-label {
-  color: var(--foreground) !important;
-  -webkit-text-fill-color: var(--foreground) !important;
-  opacity: 1 !important;
+.ag-theme-quartz .ag-root-wrapper,
+.ag-theme-quartz .ag-root,
+.ag-theme-quartz .ag-center-cols-container,
+.ag-theme-quartz .ag-center-cols-viewport,
+.ag-theme-quartz-dark .ag-root-wrapper,
+.ag-theme-quartz-dark .ag-root,
+.ag-theme-quartz-dark .ag-center-cols-container,
+.ag-theme-quartz-dark .ag-center-cols-viewport {
+  background-color: var(--card);
 }
-.ag-theme-alpine .ag-row .ag-cell-value,
-.ag-theme-alpine .ag-cell span,
-.ag-theme-alpine .ag-cell-value > span {
-  color: var(--foreground) !important;
-  -webkit-text-fill-color: var(--foreground) !important;
+
+.ag-theme-quartz .ag-row,
+.ag-theme-quartz-dark .ag-row {
+  background-color: var(--card);
+  color: var(--foreground);
+}
+
+.ag-theme-quartz .ag-row.ag-row-odd,
+.ag-theme-quartz-dark .ag-row.ag-row-odd {
+  background-color: var(--card);
+}
+
+.ag-theme-quartz .ag-header,
+.ag-theme-quartz-dark .ag-header,
+.ag-theme-quartz .ag-header-row,
+.ag-theme-quartz-dark .ag-header-row {
+  background-color: var(--card);
+  color: var(--foreground);
+  border-bottom: 1px solid var(--border);
+}
+
+.ag-theme-quartz .ag-header-cell,
+.ag-theme-quartz .ag-header-group-cell,
+.ag-theme-quartz-dark .ag-header-cell,
+.ag-theme-quartz-dark .ag-header-group-cell {
+  background-color: inherit;
+  color: inherit;
 }
