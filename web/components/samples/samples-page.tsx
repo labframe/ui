@@ -31,6 +31,7 @@ export function SamplesPage() {
     }
     return isDark ? "ag-theme-quartz-dark" : "ag-theme-quartz";
   }, [isDark, isMounted]);
+  const gridClassName = `${themeClass} h-full w-full`;
 
   const columnDefs = useMemo<ColDef<SampleListItem>[]>(
     () => [
@@ -46,10 +47,11 @@ export function SamplesPage() {
 
   const handleGridReady = (event: GridReadyEvent<SampleListItem>) => {
     gridApiRef.current = event.api;
+    event.api.sizeColumnsToFit();
   };
 
   return (
-    <main className="flex min-h-screen flex-col gap-6 bg-background p-6">
+    <main className="flex h-screen min-h-screen flex-col gap-6 bg-background p-6">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Samples</h1>
@@ -75,20 +77,21 @@ export function SamplesPage() {
           {error?.message ?? "Failed to load samples."}
         </p>
       ) : null}
-
-      <section className="flex flex-1 flex-col overflow-hidden rounded-lg border bg-card shadow-sm">
-        <div style={{ height: 480, width: "100%" }}>
-          <AgGridReact<SampleListItem>
-            key={isMounted ? (isDark ? "dark" : "light") : "light"}
-            rowData={samples}
-            columnDefs={columnDefs}
-            defaultColDef={{ sortable: true, filter: true, resizable: true }}
-            animateRows
-            loading={isLoading || isRefetching}
-            className={themeClass}
-            theme="legacy"
-            onGridReady={handleGridReady}
-          />
+      <section className="flex flex-1 min-h-0 flex-col overflow-hidden rounded-lg border bg-card shadow-sm">
+        <div className="flex-1 min-h-[480px]">
+          <div className="h-full w-full">
+            <AgGridReact<SampleListItem>
+              key={isMounted ? (isDark ? "dark" : "light") : "light"}
+              rowData={samples}
+              columnDefs={columnDefs}
+              defaultColDef={{ sortable: true, filter: true, resizable: true }}
+              animateRows
+              loading={isLoading || isRefetching}
+              className={gridClassName}
+              theme="legacy"
+              onGridReady={handleGridReady}
+            />
+          </div>
         </div>
         {isLoading ? (
           <p className="px-4 py-3 text-sm text-muted-foreground">Loading samples…</p>
