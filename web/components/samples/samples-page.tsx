@@ -42,7 +42,6 @@ const BASE_COLUMN_CONFIG: ReadonlyArray<BaseColumnConfig> = [
       colId: "sample_id",
       field: "sample_id",
       headerName: "ID",
-      maxWidth: 100,
       filter: "agNumberColumnFilter",
       pinned: "left",
       flex: 0,
@@ -55,7 +54,6 @@ const BASE_COLUMN_CONFIG: ReadonlyArray<BaseColumnConfig> = [
       colId: "code",
       field: "code",
       headerName: "Code",
-      minWidth: 110,
     },
   },
   {
@@ -66,7 +64,6 @@ const BASE_COLUMN_CONFIG: ReadonlyArray<BaseColumnConfig> = [
       colId: "author_name",
       field: "author_name",
       headerName: "Author",
-      minWidth: 120,
     },
   },
   {
@@ -76,7 +73,6 @@ const BASE_COLUMN_CONFIG: ReadonlyArray<BaseColumnConfig> = [
       colId: "dept_code",
       field: "dept_code",
       headerName: "Dept",
-      maxWidth: 140,
       flex: 0,
     },
   },
@@ -88,7 +84,6 @@ const BASE_COLUMN_CONFIG: ReadonlyArray<BaseColumnConfig> = [
       colId: "prepared_on",
       field: "prepared_on",
       headerName: "Prepared",
-      minWidth: 120,
     },
   },
   {
@@ -110,13 +105,13 @@ const BASE_COLUMN_CONFIG: ReadonlyArray<BaseColumnConfig> = [
       colId: "description",
       field: "description",
       headerName: "Description",
-      minWidth: 180,
     },
   },
 ];
-
 const CHARACTER_PIXEL_WIDTH = 8;
-const COLUMN_PADDING_PX = 36;
+const COLUMN_PADDING_PX = 28;
+const EXTRA_CHAR_PADDING = 2;
+const MIN_COLUMN_WIDTH = 56;
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -141,10 +136,7 @@ export function SamplesPage() {
   const gridApiRef = useRef<GridApi<SampleListItem> | null>(null);
   const { resolvedTheme } = useThemePreference();
   const [isMounted, setIsMounted] = useState(false);
-  const columnMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
-  const columnMenuRef = useRef<HTMLDivElement | null>(null);
   const [isColumnMenuOpen, setIsColumnMenuOpen] = useState(false);
-  const [columnMenuMaxHeight, setColumnMenuMaxHeight] = useState<number | null>(null);
   const [groupFilter, setGroupFilter] = useState<string>("all");
   const [parameterNameFilter, setParameterNameFilter] = useState("");
   const [parameterValueFilter, setParameterValueFilter] = useState("");
@@ -157,35 +149,8 @@ export function SamplesPage() {
 
   useEffect(() => {
     if (!isColumnMenuOpen) {
-      setColumnMenuMaxHeight(null);
       return;
     }
-
-    const computeMaxHeight = () => {
-      if (!columnMenuAnchorRef.current) {
-        return;
-      }
-      const anchorRect = columnMenuAnchorRef.current.getBoundingClientRect();
-      const offset = 12;
-      const maxHeight = Math.max(220, window.innerHeight - anchorRect.top - offset);
-      setColumnMenuMaxHeight(maxHeight);
-    };
-
-    computeMaxHeight();
-
-    const handleResize = () => computeMaxHeight();
-    const handleScroll = () => computeMaxHeight();
-
-    const handlePointerDown = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (
-        columnMenuRef.current?.contains(target) ||
-        columnMenuAnchorRef.current?.contains(target)
-      ) {
-        return;
-      }
-      setIsColumnMenuOpen(false);
-    };
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -193,15 +158,8 @@ export function SamplesPage() {
       }
     };
 
-    window.addEventListener("resize", handleResize);
-    window.addEventListener("scroll", handleScroll, true);
-    document.addEventListener("mousedown", handlePointerDown);
     document.addEventListener("keydown", handleKeyDown);
-
     return () => {
-      window.removeEventListener("resize", handleResize);
-      window.removeEventListener("scroll", handleScroll, true);
-      document.removeEventListener("mousedown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [isColumnMenuOpen]);
@@ -226,29 +184,60 @@ export function SamplesPage() {
     return Array.from(groups).sort((a, b) => a.localeCompare(b));
   }, [parameterDefinitions]);
 
+  const parameterGroupEntries = useMemo(() => {
+    const map = new Map<string, ParameterDefinition[]>();
+
+    for (const definition of parameterDefinitions) {
+      const key = definition.group_name?.trim() ? definition.group_name.trim() : "Ungrouped";
+      if (!map.has(key)) {
+        map.set(key, []);
+      }
+      map.get(key)!.push(definition);
+    }
+
+    return Array.from(map.entries())
+      .map(([groupName, definitions]) => [groupName, definitions.sort((a, b) => a.name.localeCompare(b.name))] as const)
+      .sort((a, b) => a[0].localeCompare(b[0]));
+  }, [parameterDefinitions]);
+
+  const hasVisibleParameterMatches = useMemo(() => {
+    return parameterGroupEntries.some(([groupName, definitions]) => {
+      if (groupFilter !== "all" && groupFilter !== groupName) {
+        return false;
+      }
+      return definitions.some((definition) => {
+        if (normalizedParameterNameFilter.length === 0) {
+          return true;
+        }
+        return definition.name.toLowerCase().includes(normalizedParameterNameFilter);
+      });
+    });
+  }, [groupFilter, normalizedParameterNameFilter, parameterGroupEntries]);
+
   const baseColumnWidths = useMemo(() => {
     const widths: Record<string, number> = {};
 
     for (const config of BASE_COLUMN_CONFIG) {
       const fieldName = typeof config.colDef.field === "string" ? config.colDef.field : null;
-      const fallbackMinWidth = config.colDef.minWidth ?? 90;
-  const maxWidth = config.colDef.maxWidth ?? 420;
-      const headerLength = config.label.length;
 
-      let maxContentLength = headerLength;
+      let maxContentLength = 0;
 
       if (fieldName) {
         for (const sample of samples) {
-          const row = sample as Record<string, unknown>;
-          const value = row[fieldName];
+          const value = sample[fieldName as keyof SampleListItem];
           const text = value == null ? "" : String(value);
           maxContentLength = Math.max(maxContentLength, text.length);
         }
       }
 
+      const effectiveLength =
+        maxContentLength > 0
+          ? maxContentLength + EXTRA_CHAR_PADDING
+          : config.label.length + EXTRA_CHAR_PADDING;
+
       const calculatedWidth = Math.max(
-        fallbackMinWidth,
-        Math.min(maxWidth, maxContentLength * CHARACTER_PIXEL_WIDTH + COLUMN_PADDING_PX),
+        MIN_COLUMN_WIDTH,
+        effectiveLength * CHARACTER_PIXEL_WIDTH + COLUMN_PADDING_PX,
       );
 
       widths[config.id] = calculatedWidth;
@@ -298,10 +287,7 @@ export function SamplesPage() {
     const widths = new Map<string, number>();
 
     for (const definition of parameterDefinitions) {
-      const fallbackMinWidth = 96;
-      const maxWidth = 360;
-      const headerLength = definition.name.length;
-      let maxContentLength = headerLength;
+      let maxContentLength = 0;
 
       for (const sample of samples) {
         const rawValue = sample.parameters?.[definition.name];
@@ -314,9 +300,14 @@ export function SamplesPage() {
         maxContentLength = Math.max(maxContentLength, value.length);
       }
 
+      const effectiveLength =
+        maxContentLength > 0
+          ? maxContentLength + EXTRA_CHAR_PADDING
+          : definition.name.length + EXTRA_CHAR_PADDING;
+
       const calculatedWidth = Math.max(
-        fallbackMinWidth,
-        Math.min(maxWidth, maxContentLength * CHARACTER_PIXEL_WIDTH + COLUMN_PADDING_PX),
+        MIN_COLUMN_WIDTH,
+        effectiveLength * CHARACTER_PIXEL_WIDTH + COLUMN_PADDING_PX,
       );
 
       widths.set(definition.name, calculatedWidth);
@@ -409,8 +400,10 @@ export function SamplesPage() {
     () =>
       BASE_COLUMN_CONFIG.map((config) => ({
         ...config.colDef,
+        headerTooltip: config.label,
         hide: columnVisibility[config.id] === false,
-        width: baseColumnWidths[config.id] ?? config.colDef.minWidth ?? 120,
+        width: baseColumnWidths[config.id] ?? MIN_COLUMN_WIDTH,
+        suppressSizeToFit: true,
       })),
     [baseColumnWidths, columnVisibility],
   );
@@ -429,11 +422,14 @@ export function SamplesPage() {
         const shouldDisplay = matchesGroup && matchesName && isToggledVisible;
         const calculatedWidth = parameterColumnWidths.get(definition.name) ?? 120;
 
+        const tooltip = definition.group_name
+          ? `${definition.name} • ${definition.group_name}`
+          : definition.name;
+
         return {
           headerName: definition.name,
-          headerTooltip: definition.group_name,
+          headerTooltip: tooltip,
           colId,
-          minWidth: 100,
           width: calculatedWidth,
           valueGetter: (params) => params.data?.parameters?.[definition.name] ?? "",
           valueSetter: (params) => {
@@ -464,6 +460,7 @@ export function SamplesPage() {
           hide: !shouldDisplay,
           filter: "agTextColumnFilter",
           floatingFilter: true,
+          suppressSizeToFit: true,
         } satisfies ColDef<SampleListItem>;
       });
     }, [columnVisibility, groupFilter, hasValueByParameter, normalizedParameterNameFilter, parameterColumnWidths, parameterDefinitions, valuesByParameter]);
@@ -577,104 +574,19 @@ export function SamplesPage() {
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative">
             <button
-              ref={columnMenuAnchorRef}
               type="button"
-              className="flex h-9 items-center gap-2 rounded border border-border bg-muted px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className={`flex h-9 items-center gap-2 rounded border px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                isColumnMenuOpen
+                  ? "border-foreground bg-foreground text-background hover:bg-foreground/90"
+                  : "border-border bg-muted text-foreground hover:bg-muted/80"
+              }`}
               onClick={handleToggleColumnMenu}
               aria-expanded={isColumnMenuOpen}
-              aria-haspopup="menu"
+              aria-haspopup="dialog"
             >
               <Filter className="h-4 w-4" aria-hidden="true" />
               Columns
             </button>
-            {isColumnMenuOpen ? (
-              <div
-                ref={columnMenuRef}
-                role="menu"
-                aria-label="Toggle columns"
-                className="absolute right-0 z-20 mt-2 w-72 max-w-[min(20rem,90vw)] rounded-md border border-border/60 bg-popover p-3 text-sm shadow-lg"
-                style={{ maxHeight: columnMenuMaxHeight ?? undefined, overflowY: "auto" }}
-              >
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Core columns
-                </p>
-                <ul className="space-y-1">
-                  {BASE_COLUMN_CONFIG.map((config) => {
-                    const fallbackVisible = config.defaultVisible ?? true;
-                    const isChecked = columnVisibility[config.id] ?? fallbackVisible;
-                    const inputId = `column-toggle-${config.id}`;
-                    return (
-                      <li key={config.id} className="flex items-center gap-2">
-                        <input
-                          id={inputId}
-                          type="checkbox"
-                          className="h-4 w-4 rounded border-border text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                          checked={isChecked}
-                          onChange={(event) =>
-                            handleColumnVisibilityChange(config.id, event.target.checked)
-                          }
-                          disabled={config.lockToggle}
-                        />
-                        <label
-                          htmlFor={inputId}
-                          className="flex flex-1 items-center justify-between gap-2 cursor-pointer select-none text-sm text-foreground"
-                        >
-                          <span>{config.label}</span>
-                          {config.lockToggle ? (
-                            <span className="text-xs font-medium text-muted-foreground">Pinned</span>
-                          ) : null}
-                        </label>
-                      </li>
-                    );
-                  })}
-                </ul>
-                <div className="mt-3 border-t border-border/40 pt-3">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Parameter columns
-                  </p>
-                  {parameterDefinitions.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">No parameter metadata available.</p>
-                  ) : (
-                    <ul className="space-y-1 pr-1">
-                      {parameterDefinitions.map((definition) => {
-                        const colId = `${PARAM_COLUMN_PREFIX}${definition.name}`;
-                        const fallbackVisible = hasValueByParameter.get(definition.name) ?? false;
-                        const isChecked = columnVisibility[colId] ?? fallbackVisible;
-                        const matchesGroup =
-                          groupFilter === "all" || definition.group_name === groupFilter;
-                        const matchesName =
-                          normalizedParameterNameFilter.length === 0 ||
-                          definition.name.toLowerCase().includes(normalizedParameterNameFilter);
-                        const optionId = `column-toggle-${colId}`;
-                        return (
-                          <li key={colId} className="flex items-start gap-2">
-                            <input
-                              id={optionId}
-                              type="checkbox"
-                              className="mt-0.5 h-4 w-4 rounded border-border text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                              checked={isChecked}
-                              onChange={(event) =>
-                                handleColumnVisibilityChange(colId, event.target.checked)
-                              }
-                            />
-                            <label
-                              htmlFor={optionId}
-                              className="flex flex-1 flex-col gap-0.5 cursor-pointer select-none"
-                            >
-                              <span className="text-sm text-foreground">{definition.name}</span>
-                              <span className="text-xs text-muted-foreground">
-                                {definition.group_name ?? "Ungrouped"}
-                                {!matchesGroup || !matchesName ? " • filtered" : ""}
-                              </span>
-                            </label>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
-                </div>
-              </div>
-            ) : null}
           </div>
           <ThemeToggle />
           <button
@@ -699,7 +611,7 @@ export function SamplesPage() {
           <label className="text-sm">
             <span className="sr-only">Parameter group</span>
             <select
-              className="h-9 rounded border border-border bg-background px-3 text-sm"
+              className="h-9 rounded border border-border bg-background px-3 text-sm transition-colors focus-visible:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               value={groupFilter}
               onChange={(event) => setGroupFilter(event.target.value)}
               disabled={parameterGroupSelectDisabled}
@@ -716,7 +628,7 @@ export function SamplesPage() {
             <span className="sr-only">Parameter name</span>
             <input
               type="text"
-              className="h-9 w-48 rounded border border-border bg-background px-3 text-sm"
+              className="h-9 w-48 rounded border border-border bg-background px-3 text-sm transition-colors focus-visible:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               placeholder="Filter parameter name"
               value={parameterNameFilter}
               onChange={(event) => setParameterNameFilter(event.target.value)}
@@ -726,7 +638,7 @@ export function SamplesPage() {
             <span className="sr-only">Parameter value</span>
             <input
               type="text"
-              className="h-9 w-48 rounded border border-border bg-background px-3 text-sm"
+              className="h-9 w-48 rounded border border-border bg-background px-3 text-sm transition-colors focus-visible:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               placeholder="Filter parameter value"
               value={parameterValueFilter}
               onChange={(event) => setParameterValueFilter(event.target.value)}
@@ -741,7 +653,7 @@ export function SamplesPage() {
         ) : null}
 
         <div className="flex-1 min-h-[480px]">
-          <div className="h-full w-full">
+          <div className="relative h-full w-full">
             <AgGridReact<SampleListItem>
               key={isMounted ? (isDark ? "dark" : "light") : "light"}
               rowData={filteredSamples}
@@ -751,13 +663,187 @@ export function SamplesPage() {
               suppressNoRowsOverlay={!isLoading && filteredSamples.length > 0}
               singleClickEdit
               stopEditingWhenCellsLoseFocus
-              className={gridClassName}
+              className={`${gridClassName} ${isColumnMenuOpen ? "pointer-events-none" : ""}`}
               components={gridComponents}
               theme="legacy"
               onGridReady={handleGridReady}
               onFirstDataRendered={handleFirstDataRendered}
               onCellValueChanged={handleCellValueChanged}
             />
+            {isColumnMenuOpen ? (
+              <div className="absolute inset-0 z-20 flex flex-col overflow-hidden bg-popover">
+                <header className="flex flex-wrap items-start justify-between gap-3 border-b border-border/60 px-4 py-3">
+                  <div>
+                    <h2 className="text-lg font-semibold text-foreground">Column visibility</h2>
+                    <p className="text-xs text-muted-foreground">
+                      Toggle core fields and parameter groups. Changes apply immediately.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="rounded border border-border bg-muted px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                    onClick={handleToggleColumnMenu}
+                  >
+                    Done
+                  </button>
+                </header>
+                <div className="flex flex-1 flex-col gap-4 overflow-hidden px-4 py-4 md:flex-row">
+                  <section className="w-full max-w-md shrink-0 space-y-3 overflow-y-auto pr-2 md:max-w-sm md:border-r md:border-border/60 md:pr-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Core columns
+                    </p>
+                    <ul className="space-y-2">
+                      {BASE_COLUMN_CONFIG.map((config) => {
+                        const fallbackVisible = config.defaultVisible ?? true;
+                        const isChecked = columnVisibility[config.id] ?? fallbackVisible;
+                        const inputId = `column-toggle-${config.id}`;
+                        return (
+                          <li key={config.id}>
+                            <label
+                              htmlFor={inputId}
+                              className="flex items-center gap-3 rounded-md border border-transparent px-2 py-1.5 text-sm transition-colors hover:border-border"
+                            >
+                              <input
+                                id={inputId}
+                                type="checkbox"
+                                className="column-toggle-checkbox h-4 w-4 rounded border-border text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                                checked={isChecked}
+                                onChange={(event) =>
+                                  handleColumnVisibilityChange(config.id, event.target.checked)
+                                }
+                                disabled={config.lockToggle}
+                              />
+                              <span className="flex flex-1 items-center justify-between gap-2 text-foreground">
+                                {config.label}
+                                {config.lockToggle ? (
+                                  <span className="text-xs font-medium text-muted-foreground">
+                                    Pinned
+                                  </span>
+                                ) : null}
+                              </span>
+                            </label>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </section>
+                  <section className="flex-1 overflow-hidden">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Parameter groups
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                            groupFilter === "all"
+                              ? "border-foreground bg-foreground text-background hover:bg-foreground/90"
+                              : "border-border/60 text-muted-foreground hover:border-border"
+                          }`}
+                          onClick={() => setGroupFilter("all")}
+                        >
+                          All groups
+                        </button>
+                        {parameterGroupEntries.map(([groupName]) => (
+                          <button
+                            key={groupName}
+                            type="button"
+                            className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                              groupFilter === groupName
+                                ? "border-foreground bg-foreground text-background hover:bg-foreground/90"
+                                : "border-border/60 text-muted-foreground hover:border-border"
+                            }`}
+                            onClick={() => setGroupFilter(groupName)}
+                          >
+                            {groupName}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    {parameterGroupEntries.length === 0 ? (
+                      <p className="mt-4 text-xs text-muted-foreground">
+                        No parameter metadata available.
+                      </p>
+                    ) : !hasVisibleParameterMatches ? (
+                      <p className="mt-4 text-xs text-muted-foreground">
+                        No parameters match the current group or name filters.
+                      </p>
+                    ) : (
+                      <div className="mt-4 h-full overflow-y-auto space-y-4 pr-2">
+                        {parameterGroupEntries
+                          .filter(([groupName]) => groupFilter === "all" || groupFilter === groupName)
+                          .map(([groupName, definitions]) => {
+                            const visibleDefinitions = definitions.filter((definition) => {
+                              if (normalizedParameterNameFilter.length === 0) {
+                                return true;
+                              }
+                              return definition.name
+                                .toLowerCase()
+                                .includes(normalizedParameterNameFilter);
+                            });
+
+                            if (visibleDefinitions.length === 0) {
+                              return null;
+                            }
+
+                            return (
+                              <section key={groupName} className="space-y-2">
+                                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                  {groupName}
+                                </h3>
+                                <ul className="space-y-1">
+                                  {visibleDefinitions.map((definition) => {
+                                    const colId = `${PARAM_COLUMN_PREFIX}${definition.name}`;
+                                    const fallbackVisible = hasValueByParameter.get(definition.name) ?? false;
+                                    const isChecked = columnVisibility[colId] ?? fallbackVisible;
+                                    const optionId = `column-toggle-${colId}`;
+                                    const metaDetails: string[] = [];
+                                    if (definition.data_type) {
+                                      metaDetails.push(definition.data_type);
+                                    }
+                                    if (definition.mode) {
+                                      metaDetails.push(
+                                        definition.mode === "fixed"
+                                          ? "Fixed value"
+                                          : definition.mode.replace(/_/g, " "),
+                                      );
+                                    }
+                                    const metaText = metaDetails.join(" • ");
+                                    return (
+                                      <li key={colId}>
+                                        <label
+                                          htmlFor={optionId}
+                                          className="flex items-center gap-3 rounded-md border border-transparent px-2 py-1.5 text-sm transition-colors hover:border-border"
+                                        >
+                                          <input
+                                            id={optionId}
+                                            type="checkbox"
+                                            className="column-toggle-checkbox h-4 w-4 rounded border-border text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                                            checked={isChecked}
+                                            onChange={(event) =>
+                                              handleColumnVisibilityChange(colId, event.target.checked)
+                                            }
+                                          />
+                                          <span className="flex flex-col text-foreground">
+                                            <span>{definition.name}</span>
+                                            {metaText ? (
+                                              <span className="text-xs text-muted-foreground">{metaText}</span>
+                                            ) : null}
+                                          </span>
+                                        </label>
+                                      </li>
+                                    );
+                                  })}
+                                </ul>
+                              </section>
+                            );
+                          })}
+                      </div>
+                    )}
+                  </section>
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
 

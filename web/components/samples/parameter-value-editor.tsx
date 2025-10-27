@@ -18,14 +18,17 @@ export interface ParameterValueEditorParams extends ICellEditorParams {
 
 export const ParameterValueEditor = forwardRef<ICellEditorComp, ParameterValueEditorParams>(
   ({ value, values, stopEditing, eGridCell }, ref) => {
-    const containerRef = useRef<HTMLDivElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const fallbackContainerRef = useRef<HTMLDivElement | null>(null);
     const inputRef = useRef<HTMLInputElement | null>(null);
     const initialValue = typeof value === "string" ? value : value ?? "";
     const [inputValue, setInputValue] = useState(initialValue);
     const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+    const latestValueRef = useRef(initialValue.trim());
 
     useEffect(() => {
       setInputValue(initialValue);
+      latestValueRef.current = initialValue.trim();
     }, [initialValue]);
 
     const optionValues = useMemo(() => {
@@ -43,7 +46,16 @@ export const ParameterValueEditor = forwardRef<ICellEditorComp, ParameterValueEd
     }, [values]);
 
     useImperativeHandle(ref, () => ({
-      getValue: () => inputValue.trim(),
+      getGui: () => {
+        if (containerRef.current) {
+          return containerRef.current;
+        }
+        if (!fallbackContainerRef.current) {
+          fallbackContainerRef.current = document.createElement("div");
+        }
+        return fallbackContainerRef.current;
+      },
+      getValue: () => latestValueRef.current,
       afterGuiAttached: () => {
         if (inputRef.current) {
           inputRef.current.focus();
@@ -94,6 +106,7 @@ export const ParameterValueEditor = forwardRef<ICellEditorComp, ParameterValueEd
     const handleOptionSelect = useCallback(
       (option: string) => {
         setInputValue(option);
+        latestValueRef.current = option.trim();
         setIsOptionsOpen(false);
 
         if (stopEditing) {
@@ -108,11 +121,14 @@ export const ParameterValueEditor = forwardRef<ICellEditorComp, ParameterValueEd
     );
 
     return (
-      <div ref={containerRef} className="relative flex w-full items-center gap-2">
+      <div ref={containerRef} className="relative flex h-full w-full items-stretch gap-2">
         <input
           ref={inputRef}
           value={inputValue}
-          onChange={(event) => setInputValue(event.target.value)}
+          onChange={(event) => {
+            setInputValue(event.target.value);
+            latestValueRef.current = event.target.value.trim();
+          }}
           onKeyDown={(event) => {
             if (event.key === "ArrowDown" && optionValues.length > 0) {
               event.preventDefault();
@@ -120,6 +136,7 @@ export const ParameterValueEditor = forwardRef<ICellEditorComp, ParameterValueEd
             }
             if (event.key === "Enter") {
               event.preventDefault();
+              latestValueRef.current = inputRef.current?.value.trim() ?? "";
               stopEditing?.();
             }
             if (event.key === "Escape") {
@@ -128,15 +145,18 @@ export const ParameterValueEditor = forwardRef<ICellEditorComp, ParameterValueEd
               stopEditing?.(true);
             }
           }}
-          className="w-full rounded border border-border bg-background px-2 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="h-full w-full rounded border border-border bg-background px-2 text-sm focus-visible:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           placeholder="Enter value"
           aria-autocomplete="list"
+          onBlur={(event) => {
+            latestValueRef.current = event.target.value.trim();
+          }}
         />
         {optionValues.length > 0 ? (
           <>
             <button
               type="button"
-              className="flex h-7 w-7 items-center justify-center rounded border border-border bg-muted text-muted-foreground transition-colors hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex h-full w-9 items-center justify-center rounded border border-border bg-muted text-muted-foreground transition-colors hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               onMouseDown={(event) => {
                 event.preventDefault();
                 event.stopPropagation();

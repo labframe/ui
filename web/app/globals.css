@@ -53,7 +53,7 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.59 0.23 305);
+  --primary: oklch(50.384% 0.29377 285.384);
   --primary-foreground: oklch(0.985 0.02 305);
   --secondary: oklch(0.96 0.02 305);
   --secondary-foreground: oklch(0.28 0.06 305);
@@ -87,13 +87,13 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.73 0.12 305);
+  --primary: rgb(86, 14, 255);
   --primary-foreground: oklch(0.17 0.06 305);
   --secondary: oklch(0.28 0.02 305);
   --secondary-foreground: oklch(0.92 0.03 305);
   --muted: oklch(0.28 0.015 305);
   --muted-foreground: oklch(0.76 0.04 305);
-  --accent: oklch(0.73 0.12 305);
+  --accent: rgb(106, 0, 255);
   --accent-foreground: oklch(0.17 0.06 305);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
@@ -189,8 +189,6 @@
 .ag-theme-quartz-dark .ag-header {
   background-color: var(--card);
   color: var(--foreground);
-  padding-bottom: var(--ag-floating-filter-height);
-  position: relative;
 }
 
 .ag-theme-quartz .ag-header-row,
@@ -206,9 +204,6 @@
 
 .ag-theme-quartz .ag-header-row-floating-filter,
 .ag-theme-quartz-dark .ag-header-row-floating-filter {
-  top: auto !important;
-  bottom: 0;
-  transform: translateY(0) !important;
   border-top: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
   background-color: inherit;
 }
@@ -237,14 +232,18 @@
 
 .ag-theme-quartz .ag-floating-filter-input input:focus,
 .ag-theme-quartz-dark .ag-floating-filter-input input:focus {
-  border-color: color-mix(in srgb, var(--ring) 70%, transparent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 45%, transparent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent);
   outline: none;
 }
 
 .ag-theme-quartz .ag-floating-filter-input input::placeholder,
 .ag-theme-quartz-dark .ag-floating-filter-input input::placeholder {
   color: color-mix(in srgb, var(--muted-foreground) 80%, transparent);
+}
+
+.column-toggle-checkbox {
+  accent-color: var(--primary);
 }
 
 .ag-theme-quartz .ag-header-cell,
