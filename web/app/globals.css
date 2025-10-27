@@ -123,7 +123,8 @@
   }
 }
 
-.ag-theme-quartz {
+.ag-theme-quartz,
+.ag-theme-quartz-dark {
   --ag-foreground-color: var(--foreground);
   --ag-secondary-foreground-color: color-mix(in srgb, var(--foreground), transparent 35%);
   --ag-data-color: var(--foreground);
@@ -133,15 +134,32 @@
   --ag-row-background-color: var(--card);
   --ag-even-row-background-color: var(--card);
   --ag-odd-row-background-color: var(--card);
-  --ag-row-hover-color: color-mix(in srgb, var(--primary) 12%, var(--card));
-  --ag-row-border-color: color-mix(in srgb, var(--border) 70%, transparent);
-  --ag-border-color: color-mix(in srgb, var(--border) 75%, transparent);
-  --ag-active-color: var(--primary);
-  --ag-selected-row-background-color: color-mix(in srgb, var(--primary) 15%, var(--card));
+  --ag-row-hover-color: color-mix(in srgb, var(--muted) 45%, transparent);
+  --ag-row-border-color: color-mix(in srgb, var(--border) 65%, transparent);
+  --ag-border-color: color-mix(in srgb, var(--border) 80%, transparent);
+  --ag-active-color: color-mix(in srgb, var(--ring) 75%, transparent);
+  --ag-focus-border-color: color-mix(in srgb, var(--ring) 60%, transparent);
+  --ag-selected-row-background-color: color-mix(in srgb, var(--primary) 14%, var(--card));
   --ag-selected-row-foreground-color: var(--primary-foreground);
+  --ag-range-selection-background-color: color-mix(in srgb, var(--ring) 16%, transparent);
+  --ag-range-selection-border-color: color-mix(in srgb, var(--ring) 70%, transparent);
   --ag-control-panel-background-color: var(--card);
   --ag-subheader-toolbar-background-color: var(--card);
   --ag-checkbox-background-color: var(--card);
+  --ag-checkbox-border-color: color-mix(in srgb, var(--border) 70%, transparent);
+  --ag-checkbox-checked-color: var(--primary);
+  --ag-input-border-color: color-mix(in srgb, var(--border) 85%, transparent);
+  --ag-input-focus-border-color: color-mix(in srgb, var(--ring) 70%, transparent);
+  --ag-floating-filter-button-background-color: var(--card);
+  --ag-floating-filter-input-background-color: var(--background);
+  --ag-floating-filter-input-border-color: color-mix(in srgb, var(--border) 80%, transparent);
+  --ag-floating-filter-button-active-background-color: color-mix(in srgb, var(--muted) 60%, transparent);
+  --ag-pinned-column-background-color: color-mix(in srgb, var(--card) 92%, transparent);
+  --ag-header-column-separator-color: color-mix(in srgb, var(--border) 80%, transparent);
+  --ag-header-height: 42px;
+  --ag-floating-filter-height: 42px;
+  --ag-floating-filters-height: 42px;
+  --ag-wrapper-border-radius: var(--radius-md);
   --ag-widget-container-horizontal-padding: 0.75rem;
 }
 
@@ -168,12 +186,56 @@
 }
 
 .ag-theme-quartz .ag-header,
-.ag-theme-quartz-dark .ag-header,
-.ag-theme-quartz .ag-header-row,
-.ag-theme-quartz-dark .ag-header-row {
+.ag-theme-quartz-dark .ag-header {
   background-color: var(--card);
   color: var(--foreground);
-  border-bottom: 1px solid var(--border);
+  padding-bottom: var(--ag-floating-filter-height);
+}
+
+.ag-theme-quartz .ag-header-row,
+.ag-theme-quartz-dark .ag-header-row {
+  background-color: inherit;
+  color: inherit;
+}
+
+.ag-theme-quartz .ag-header-row:not(.ag-header-row-floating-filter),
+.ag-theme-quartz-dark .ag-header-row:not(.ag-header-row-floating-filter) {
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
+}
+
+.ag-theme-quartz .ag-header-viewport,
+.ag-theme-quartz-dark .ag-header-viewport {
+  overflow: visible;
+}
+
+.ag-theme-quartz .ag-header-row-floating-filter,
+.ag-theme-quartz-dark .ag-header-row-floating-filter {
+  top: auto !important;
+  bottom: 0;
+  border-top: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  background-color: inherit;
+}
+
+.ag-theme-quartz .ag-floating-filter-input input,
+.ag-theme-quartz-dark .ag-floating-filter-input input {
+  background-color: var(--background);
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius: 0.5rem;
+  color: var(--foreground);
+  padding: 0.25rem 0.5rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ag-theme-quartz .ag-floating-filter-input input:focus,
+.ag-theme-quartz-dark .ag-floating-filter-input input:focus {
+  border-color: color-mix(in srgb, var(--ring) 70%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 45%, transparent);
+  outline: none;
+}
+
+.ag-theme-quartz .ag-floating-filter-input input::placeholder,
+.ag-theme-quartz-dark .ag-floating-filter-input input::placeholder {
+  color: color-mix(in srgb, var(--muted-foreground) 80%, transparent);
 }
 
 .ag-theme-quartz .ag-header-cell,

@@ -35,9 +35,6 @@
       with the additional option of selecting (with checkboxes) which types of data to clone:
       the parameter groups, the parameters (requires groups too), or the parameter values (requires groups and parameters too, so the other 2 checkboxes are auto-selected when selecting this).
       The new database will then be cloned from the template database.
-
-## Samples page
-
 - [ ] Implement easy data entry in the samples page:
   - In-line editing of parameter values:
     It would be great if the user could just double-click a cell in the table
@@ -53,6 +50,7 @@
   which differs from the neighboring columns (so group colors alternate)
 - OR split the parameter section of the sample rows into one row per group,
   so the table is much less wide and the groups are stacked.
+- [ ] Ability to select a range of cells instead of just a single cell.
 
 # Server
 
