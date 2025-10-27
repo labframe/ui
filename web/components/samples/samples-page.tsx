@@ -55,7 +55,7 @@ const BASE_COLUMN_CONFIG: ReadonlyArray<BaseColumnConfig> = [
       colId: "code",
       field: "code",
       headerName: "Code",
-      minWidth: 160,
+      minWidth: 110,
     },
   },
   {
@@ -66,7 +66,7 @@ const BASE_COLUMN_CONFIG: ReadonlyArray<BaseColumnConfig> = [
       colId: "author_name",
       field: "author_name",
       headerName: "Author",
-      minWidth: 160,
+      minWidth: 120,
     },
   },
   {
@@ -88,7 +88,7 @@ const BASE_COLUMN_CONFIG: ReadonlyArray<BaseColumnConfig> = [
       colId: "prepared_on",
       field: "prepared_on",
       headerName: "Prepared",
-      minWidth: 160,
+      minWidth: 120,
     },
   },
   {
@@ -110,10 +110,13 @@ const BASE_COLUMN_CONFIG: ReadonlyArray<BaseColumnConfig> = [
       colId: "description",
       field: "description",
       headerName: "Description",
-      minWidth: 200,
+      minWidth: 180,
     },
   },
 ];
+
+const CHARACTER_PIXEL_WIDTH = 8;
+const COLUMN_PADDING_PX = 36;
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -141,6 +144,7 @@ export function SamplesPage() {
   const columnMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
   const columnMenuRef = useRef<HTMLDivElement | null>(null);
   const [isColumnMenuOpen, setIsColumnMenuOpen] = useState(false);
+  const [columnMenuMaxHeight, setColumnMenuMaxHeight] = useState<number | null>(null);
   const [groupFilter, setGroupFilter] = useState<string>("all");
   const [parameterNameFilter, setParameterNameFilter] = useState("");
   const [parameterValueFilter, setParameterValueFilter] = useState("");
@@ -153,8 +157,24 @@ export function SamplesPage() {
 
   useEffect(() => {
     if (!isColumnMenuOpen) {
+      setColumnMenuMaxHeight(null);
       return;
     }
+
+    const computeMaxHeight = () => {
+      if (!columnMenuAnchorRef.current) {
+        return;
+      }
+      const anchorRect = columnMenuAnchorRef.current.getBoundingClientRect();
+      const offset = 12;
+      const maxHeight = Math.max(220, window.innerHeight - anchorRect.top - offset);
+      setColumnMenuMaxHeight(maxHeight);
+    };
+
+    computeMaxHeight();
+
+    const handleResize = () => computeMaxHeight();
+    const handleScroll = () => computeMaxHeight();
 
     const handlePointerDown = (event: MouseEvent) => {
       const target = event.target as Node;
@@ -173,10 +193,14 @@ export function SamplesPage() {
       }
     };
 
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("scroll", handleScroll, true);
     document.addEventListener("mousedown", handlePointerDown);
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("scroll", handleScroll, true);
       document.removeEventListener("mousedown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
@@ -201,6 +225,37 @@ export function SamplesPage() {
     }
     return Array.from(groups).sort((a, b) => a.localeCompare(b));
   }, [parameterDefinitions]);
+
+  const baseColumnWidths = useMemo(() => {
+    const widths: Record<string, number> = {};
+
+    for (const config of BASE_COLUMN_CONFIG) {
+      const fieldName = typeof config.colDef.field === "string" ? config.colDef.field : null;
+      const fallbackMinWidth = config.colDef.minWidth ?? 90;
+  const maxWidth = config.colDef.maxWidth ?? 420;
+      const headerLength = config.label.length;
+
+      let maxContentLength = headerLength;
+
+      if (fieldName) {
+        for (const sample of samples) {
+          const row = sample as Record<string, unknown>;
+          const value = row[fieldName];
+          const text = value == null ? "" : String(value);
+          maxContentLength = Math.max(maxContentLength, text.length);
+        }
+      }
+
+      const calculatedWidth = Math.max(
+        fallbackMinWidth,
+        Math.min(maxWidth, maxContentLength * CHARACTER_PIXEL_WIDTH + COLUMN_PADDING_PX),
+      );
+
+      widths[config.id] = calculatedWidth;
+    }
+
+    return widths;
+  }, [samples]);
 
   const { hasValueByParameter, valuesByParameter } = useMemo(() => {
     const hasValue = new Map<string, boolean>();
@@ -238,6 +293,37 @@ export function SamplesPage() {
 
     return { hasValueByParameter: hasValue, valuesByParameter: valuesByParam };
   }, [parameterDefinitions, samples]);
+
+  const parameterColumnWidths = useMemo(() => {
+    const widths = new Map<string, number>();
+
+    for (const definition of parameterDefinitions) {
+      const fallbackMinWidth = 96;
+      const maxWidth = 360;
+      const headerLength = definition.name.length;
+      let maxContentLength = headerLength;
+
+      for (const sample of samples) {
+        const rawValue = sample.parameters?.[definition.name];
+        const text = rawValue == null ? "" : String(rawValue);
+        maxContentLength = Math.max(maxContentLength, text.length);
+      }
+
+      const knownValues = valuesByParameter.get(definition.name) ?? [];
+      for (const value of knownValues) {
+        maxContentLength = Math.max(maxContentLength, value.length);
+      }
+
+      const calculatedWidth = Math.max(
+        fallbackMinWidth,
+        Math.min(maxWidth, maxContentLength * CHARACTER_PIXEL_WIDTH + COLUMN_PADDING_PX),
+      );
+
+      widths.set(definition.name, calculatedWidth);
+    }
+
+    return widths;
+  }, [parameterDefinitions, samples, valuesByParameter]);
 
   useEffect(() => {
     setColumnVisibility((previous) => {
@@ -324,8 +410,9 @@ export function SamplesPage() {
       BASE_COLUMN_CONFIG.map((config) => ({
         ...config.colDef,
         hide: columnVisibility[config.id] === false,
+        width: baseColumnWidths[config.id] ?? config.colDef.minWidth ?? 120,
       })),
-    [columnVisibility],
+    [baseColumnWidths, columnVisibility],
   );
 
   const parameterColumnDefs = useMemo<ColDef<SampleListItem>[]>(() => {
@@ -340,12 +427,14 @@ export function SamplesPage() {
         const isToggledVisible =
           columnVisibility[colId] === undefined ? fallbackVisible : columnVisibility[colId];
         const shouldDisplay = matchesGroup && matchesName && isToggledVisible;
+        const calculatedWidth = parameterColumnWidths.get(definition.name) ?? 120;
 
         return {
           headerName: definition.name,
           headerTooltip: definition.group_name,
           colId,
-          minWidth: 160,
+          minWidth: 100,
+          width: calculatedWidth,
           valueGetter: (params) => params.data?.parameters?.[definition.name] ?? "",
           valueSetter: (params) => {
             const rawValue = params.newValue ?? "";
@@ -377,11 +466,30 @@ export function SamplesPage() {
           floatingFilter: true,
         } satisfies ColDef<SampleListItem>;
       });
-  }, [columnVisibility, groupFilter, hasValueByParameter, normalizedParameterNameFilter, parameterDefinitions, valuesByParameter]);
+    }, [columnVisibility, groupFilter, hasValueByParameter, normalizedParameterNameFilter, parameterColumnWidths, parameterDefinitions, valuesByParameter]);
+
+  const fillerColumnDef = useMemo<ColDef<SampleListItem>>(
+    () => ({
+      colId: "__padding__",
+      headerName: "",
+      valueGetter: () => "",
+      resizable: false,
+      sortable: false,
+      filter: false,
+      editable: false,
+      suppressMenu: true,
+      suppressMovable: true,
+      width: 1,
+      flex: 1,
+      cellClass: "ag-filler-cell",
+      headerClass: "ag-filler-header",
+    }),
+    [],
+  );
 
   const columnDefs = useMemo<ColDef<SampleListItem>[]>(
-    () => [...baseColumnDefs, ...parameterColumnDefs],
-    [baseColumnDefs, parameterColumnDefs],
+    () => [...baseColumnDefs, ...parameterColumnDefs, fillerColumnDef],
+    [baseColumnDefs, fillerColumnDef, parameterColumnDefs],
   );
 
   const defaultColDef = useMemo<ColDef<SampleListItem>>(
@@ -390,8 +498,8 @@ export function SamplesPage() {
       filter: true,
       resizable: true,
       floatingFilter: true,
-      flex: 1,
-      minWidth: 140,
+      flex: 0,
+      minWidth: 90,
       editable: false,
     }),
     [],
@@ -399,12 +507,11 @@ export function SamplesPage() {
 
   const handleGridReady = useCallback((event: GridReadyEvent<SampleListItem>) => {
     gridApiRef.current = event.api;
-    event.api.sizeColumnsToFit();
   }, []);
 
   const handleFirstDataRendered = useCallback(
     (event: FirstDataRenderedEvent<SampleListItem>) => {
-      event.api.sizeColumnsToFit();
+      event.api.refreshHeader();
     },
     [],
   );
@@ -485,7 +592,8 @@ export function SamplesPage() {
                 ref={columnMenuRef}
                 role="menu"
                 aria-label="Toggle columns"
-                className="absolute right-0 z-20 mt-2 w-72 rounded-md border border-border/60 bg-popover p-3 text-sm shadow-lg"
+                className="absolute right-0 z-20 mt-2 w-72 max-w-[min(20rem,90vw)] rounded-md border border-border/60 bg-popover p-3 text-sm shadow-lg"
+                style={{ maxHeight: columnMenuMaxHeight ?? undefined, overflowY: "auto" }}
               >
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Core columns
@@ -527,7 +635,7 @@ export function SamplesPage() {
                   {parameterDefinitions.length === 0 ? (
                     <p className="text-xs text-muted-foreground">No parameter metadata available.</p>
                   ) : (
-                    <ul className="max-h-56 space-y-1 overflow-y-auto pr-1">
+                    <ul className="space-y-1 pr-1">
                       {parameterDefinitions.map((definition) => {
                         const colId = `${PARAM_COLUMN_PREFIX}${definition.name}`;
                         const fallbackVisible = hasValueByParameter.get(definition.name) ?? false;

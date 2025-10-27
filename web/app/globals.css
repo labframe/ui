@@ -53,18 +53,18 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --primary: oklch(0.59 0.23 305);
+  --primary-foreground: oklch(0.985 0.02 305);
+  --secondary: oklch(0.96 0.02 305);
+  --secondary-foreground: oklch(0.28 0.06 305);
+  --muted: oklch(0.95 0.01 305);
+  --muted-foreground: oklch(0.52 0.03 305);
+  --accent: oklch(0.59 0.23 305);
+  --accent-foreground: oklch(0.985 0.02 305);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --ring: oklch(0.59 0.23 305);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -87,18 +87,18 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.73 0.12 305);
+  --primary-foreground: oklch(0.17 0.06 305);
+  --secondary: oklch(0.28 0.02 305);
+  --secondary-foreground: oklch(0.92 0.03 305);
+  --muted: oklch(0.28 0.015 305);
+  --muted-foreground: oklch(0.76 0.04 305);
+  --accent: oklch(0.73 0.12 305);
+  --accent-foreground: oklch(0.17 0.06 305);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --ring: oklch(0.73 0.12 305);
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -137,25 +137,25 @@
   --ag-row-hover-color: color-mix(in srgb, var(--muted) 45%, transparent);
   --ag-row-border-color: color-mix(in srgb, var(--border) 65%, transparent);
   --ag-border-color: color-mix(in srgb, var(--border) 80%, transparent);
-  --ag-active-color: color-mix(in srgb, var(--ring) 75%, transparent);
-  --ag-focus-border-color: color-mix(in srgb, var(--ring) 60%, transparent);
+  --ag-active-color: var(--accent);
+  --ag-focus-border-color: var(--accent);
   --ag-selected-row-background-color: color-mix(in srgb, var(--primary) 14%, var(--card));
   --ag-selected-row-foreground-color: var(--primary-foreground);
-  --ag-range-selection-background-color: color-mix(in srgb, var(--ring) 16%, transparent);
-  --ag-range-selection-border-color: color-mix(in srgb, var(--ring) 70%, transparent);
+  --ag-range-selection-background-color: color-mix(in srgb, var(--accent) 18%, transparent);
+  --ag-range-selection-border-color: var(--accent);
   --ag-control-panel-background-color: var(--card);
   --ag-subheader-toolbar-background-color: var(--card);
   --ag-checkbox-background-color: var(--card);
-  --ag-checkbox-border-color: color-mix(in srgb, var(--border) 70%, transparent);
-  --ag-checkbox-checked-color: var(--primary);
-  --ag-input-border-color: color-mix(in srgb, var(--border) 85%, transparent);
-  --ag-input-focus-border-color: color-mix(in srgb, var(--ring) 70%, transparent);
+  --ag-checkbox-border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  --ag-checkbox-checked-color: var(--accent);
+  --ag-input-border-color: color-mix(in srgb, var(--border) 80%, transparent);
+  --ag-input-focus-border-color: var(--accent);
   --ag-floating-filter-button-background-color: var(--card);
   --ag-floating-filter-input-background-color: var(--background);
-  --ag-floating-filter-input-border-color: color-mix(in srgb, var(--border) 80%, transparent);
-  --ag-floating-filter-button-active-background-color: color-mix(in srgb, var(--muted) 60%, transparent);
+  --ag-floating-filter-input-border-color: color-mix(in srgb, var(--border) 75%, transparent);
+  --ag-floating-filter-button-active-background-color: color-mix(in srgb, var(--accent) 28%, transparent);
   --ag-pinned-column-background-color: color-mix(in srgb, var(--card) 92%, transparent);
-  --ag-header-column-separator-color: color-mix(in srgb, var(--border) 80%, transparent);
+  --ag-header-column-separator-color: color-mix(in srgb, var(--border) 75%, transparent);
   --ag-header-height: 42px;
   --ag-floating-filter-height: 42px;
   --ag-floating-filters-height: 42px;
@@ -190,6 +190,7 @@
   background-color: var(--card);
   color: var(--foreground);
   padding-bottom: var(--ag-floating-filter-height);
+  position: relative;
 }
 
 .ag-theme-quartz .ag-header-row,
@@ -203,17 +204,25 @@
   border-bottom: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
 }
 
-.ag-theme-quartz .ag-header-viewport,
-.ag-theme-quartz-dark .ag-header-viewport {
-  overflow: visible;
-}
-
 .ag-theme-quartz .ag-header-row-floating-filter,
 .ag-theme-quartz-dark .ag-header-row-floating-filter {
   top: auto !important;
   bottom: 0;
+  transform: translateY(0) !important;
   border-top: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
   background-color: inherit;
+}
+
+.ag-theme-quartz .ag-filler-cell,
+.ag-theme-quartz-dark .ag-filler-cell {
+  background-color: transparent !important;
+  border-color: transparent !important;
+  pointer-events: none;
+}
+
+.ag-theme-quartz .ag-filler-header,
+.ag-theme-quartz-dark .ag-filler-header {
+  display: none;
 }
 
 .ag-theme-quartz .ag-floating-filter-input input,

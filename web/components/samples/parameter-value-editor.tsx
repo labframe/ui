@@ -17,7 +17,7 @@ export interface ParameterValueEditorParams extends ICellEditorParams {
 }
 
 export const ParameterValueEditor = forwardRef<ICellEditorComp, ParameterValueEditorParams>(
-  ({ value, values, stopEditing }, ref) => {
+  ({ value, values, stopEditing, eGridCell }, ref) => {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const inputRef = useRef<HTMLInputElement | null>(null);
     const initialValue = typeof value === "string" ? value : value ?? "";
@@ -43,7 +43,7 @@ export const ParameterValueEditor = forwardRef<ICellEditorComp, ParameterValueEd
     }, [values]);
 
     useImperativeHandle(ref, () => ({
-      getValue: () => inputValue,
+      getValue: () => inputValue.trim(),
       afterGuiAttached: () => {
         if (inputRef.current) {
           inputRef.current.focus();
@@ -52,6 +52,17 @@ export const ParameterValueEditor = forwardRef<ICellEditorComp, ParameterValueEd
       },
       isCancelAfterEnd: () => false,
     }));
+
+    useEffect(() => {
+      if (!eGridCell) {
+        return;
+      }
+      const previousOverflow = eGridCell.style.overflow;
+      eGridCell.style.overflow = "visible";
+      return () => {
+        eGridCell.style.overflow = previousOverflow;
+      };
+    }, [eGridCell]);
 
     useEffect(() => {
       if (!isOptionsOpen) {
@@ -107,6 +118,15 @@ export const ParameterValueEditor = forwardRef<ICellEditorComp, ParameterValueEd
               event.preventDefault();
               setIsOptionsOpen(true);
             }
+            if (event.key === "Enter") {
+              event.preventDefault();
+              stopEditing?.();
+            }
+            if (event.key === "Escape") {
+              event.preventDefault();
+              setIsOptionsOpen(false);
+              stopEditing?.(true);
+            }
           }}
           className="w-full rounded border border-border bg-background px-2 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           placeholder="Enter value"
@@ -117,7 +137,11 @@ export const ParameterValueEditor = forwardRef<ICellEditorComp, ParameterValueEd
             <button
               type="button"
               className="flex h-7 w-7 items-center justify-center rounded border border-border bg-muted text-muted-foreground transition-colors hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              onClick={() => setIsOptionsOpen((previous) => !previous)}
+              onMouseDown={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                setIsOptionsOpen((previous) => !previous);
+              }}
               aria-haspopup="listbox"
               aria-expanded={isOptionsOpen}
             >
@@ -127,7 +151,7 @@ export const ParameterValueEditor = forwardRef<ICellEditorComp, ParameterValueEd
             {isOptionsOpen ? (
               <ul
                 role="listbox"
-                className="absolute right-0 top-full z-30 mt-1 w-56 overflow-hidden rounded-md border border-border/60 bg-popover py-1 text-sm shadow-lg"
+                className="absolute right-0 top-full z-30 mt-1 w-56 max-h-60 overflow-auto rounded-md border border-border/60 bg-popover py-1 text-sm shadow-lg"
               >
                 {optionValues.map((option) => (
                   <li key={option}>
