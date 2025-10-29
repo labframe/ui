@@ -5,9 +5,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   fetchParameterDefinitions,
   fetchSamples,
-  type FetchOptions,
   type FetchSamplesParams,
   type ParameterDefinition,
+  type SampleParameterAssignment,
   type SampleListItem,
   updateSampleParameters,
 } from "../api";
@@ -19,12 +19,12 @@ export function useSamplesQuery(params: FetchSamplesParams = {}) {
   return useQuery<SampleListItem[], Error>({
     queryKey: [...SAMPLES_QUERY_KEY, params.includeDeleted ?? false],
     queryFn: async ({ signal }) => {
-      console.log("useSamplesQuery: queryFn start", {
+      console.warn("useSamplesQuery: queryFn start", {
         includeDeleted: params.includeDeleted ?? false,
         signalAborted: signal?.aborted ?? false,
       });
       const result = await fetchSamples(params, { signal });
-      console.log("useSamplesQuery: queryFn success", {
+      console.warn("useSamplesQuery: queryFn success", {
         includeDeleted: params.includeDeleted ?? false,
         rowCount: result.length,
       });
@@ -36,15 +36,20 @@ export function useSamplesQuery(params: FetchSamplesParams = {}) {
 
 interface UpdateParametersInput {
   sampleId: number;
-  parameters: Record<string, string>;
+  assignments: SampleParameterAssignment[];
 }
 
 export function useUpdateSampleParameters() {
   const queryClient = useQueryClient();
 
   return useMutation<SampleListItem, Error, UpdateParametersInput>({
-    mutationFn: ({ sampleId, parameters }) =>
-      updateSampleParameters(sampleId, parameters),
+    mutationFn: ({ sampleId, assignments }) => {
+      console.warn("useUpdateSampleParameters: mutation invoked", {
+        sampleId,
+        assignmentCount: assignments.length,
+      });
+      return updateSampleParameters(sampleId, assignments);
+    },
     onSuccess: (updatedSample) => {
       queryClient.setQueriesData<SampleListItem[] | undefined>(
         { queryKey: SAMPLES_QUERY_KEY, exact: false },
@@ -54,6 +59,12 @@ export function useUpdateSampleParameters() {
           ) ?? previous,
       );
     },
+    onError: (err) => {
+      console.error("Failed to update sample parameters", err);
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: SAMPLES_QUERY_KEY, exact: false });
+    },
   });
 }
 
@@ -61,11 +72,11 @@ export function useParameterDefinitions() {
   return useQuery<ParameterDefinition[], Error>({
     queryKey: PARAMETER_DEFINITIONS_KEY,
     queryFn: async ({ signal }) => {
-      console.log("useParameterDefinitions: queryFn start", {
+      console.warn("useParameterDefinitions: queryFn start", {
         signalAborted: signal?.aborted ?? false,
       });
       const result = await fetchParameterDefinitions({ signal });
-      console.log("useParameterDefinitions: queryFn success", {
+      console.warn("useParameterDefinitions: queryFn success", {
         definitionCount: result.length,
       });
       return result;

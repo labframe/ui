@@ -12,25 +12,24 @@ import {
 import type { ICellEditorComp, ICellEditorParams } from "ag-grid-community";
 import { ChevronsUpDown } from "lucide-react";
 
+type ParameterEditSource = "optionSelect" | "keyboard" | "blur";
+
+type ApplyCandidateResult = {
+  applied: boolean;
+  displayValue?: string;
+  reason?: string;
+};
+
 export interface ParameterValueEditorParams extends ICellEditorParams {
   values?: string[];
+  applyCandidate?: (candidate: string, source: ParameterEditSource) => ApplyCandidateResult;
 }
 
 export const ParameterValueEditor = forwardRef<ICellEditorComp, ParameterValueEditorParams>(
-  ({ value, values, stopEditing, eGridCell }, ref) => {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const fallbackContainerRef = useRef<HTMLDivElement | null>(null);
+  ({ value, values, stopEditing, eGridCell, applyCandidate }, ref) => {
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    const fallbackContainerRef = useRef<HTMLDivElement | null>(null);
     const inputRef = useRef<HTMLInputElement | null>(null);
-    const initialValue = typeof value === "string" ? value : value ?? "";
-    const [inputValue, setInputValue] = useState(initialValue);
-    const [isOptionsOpen, setIsOptionsOpen] = useState(false);
-    const latestValueRef = useRef(initialValue.trim());
-
-    useEffect(() => {
-      setInputValue(initialValue);
-      latestValueRef.current = initialValue.trim();
-    }, [initialValue]);
-
     const optionValues = useMemo(() => {
       if (!values?.length) {
         return [] as string[];
@@ -44,6 +43,42 @@ export const ParameterValueEditor = forwardRef<ICellEditorComp, ParameterValueEd
       }
       return Array.from(unique).sort((a, b) => a.localeCompare(b));
     }, [values]);
+
+    const initialValue = typeof value === "string" ? value : value ?? "";
+    const [inputValue, setInputValue] = useState(initialValue);
+    const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+    const latestValueRef = useRef(initialValue.trim());
+    const [dropdownWidth, setDropdownWidth] = useState<number | undefined>(undefined);
+    const availableOptions = useMemo(
+      () => optionValues.filter((option) => option !== latestValueRef.current),
+      [optionValues, inputValue],
+    );
+
+    useEffect(() => {
+      setInputValue(initialValue);
+      latestValueRef.current = initialValue.trim();
+    }, [initialValue]);
+
+    const attemptCommit = useCallback(
+      (rawValue: string, source: ParameterEditSource): ApplyCandidateResult => {
+        const trimmed = rawValue.trim();
+        latestValueRef.current = trimmed;
+
+        if (!applyCandidate) {
+          return { applied: true, displayValue: trimmed };
+        }
+
+        const outcome = applyCandidate(trimmed, source);
+
+        if (outcome.displayValue != null) {
+          latestValueRef.current = outcome.displayValue;
+          setInputValue(outcome.displayValue);
+        }
+
+        return outcome;
+      },
+      [applyCandidate],
+    );
 
     useImperativeHandle(ref, () => ({
       getGui: () => {
@@ -103,25 +138,48 @@ export const ParameterValueEditor = forwardRef<ICellEditorComp, ParameterValueEd
       };
     }, [isOptionsOpen]);
 
+    useEffect(() => {
+      if (!isOptionsOpen) {
+        return;
+      }
+
+      const updateWidth = () => {
+        if (!containerRef.current) {
+          return;
+        }
+        setDropdownWidth(containerRef.current.getBoundingClientRect().width);
+      };
+
+      updateWidth();
+      window.addEventListener("resize", updateWidth);
+      return () => {
+        window.removeEventListener("resize", updateWidth);
+      };
+    }, [isOptionsOpen]);
+
+    const closeEditor = useCallback(() => {
+      if (stopEditing) {
+        if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
+          window.requestAnimationFrame(() => stopEditing());
+        } else {
+          stopEditing();
+        }
+      }
+    }, [stopEditing]);
+
     const handleOptionSelect = useCallback(
       (option: string) => {
-        setInputValue(option);
-        latestValueRef.current = option.trim();
-        setIsOptionsOpen(false);
-
-        if (stopEditing) {
-          if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
-            window.requestAnimationFrame(() => stopEditing());
-          } else {
-            stopEditing();
-          }
+        const outcome = attemptCommit(option, "optionSelect");
+        if (outcome.applied) {
+          setIsOptionsOpen(false);
+          closeEditor();
         }
       },
-      [stopEditing],
+      [attemptCommit, closeEditor],
     );
 
     return (
-      <div ref={containerRef} className="relative flex h-full w-full items-stretch gap-2">
+      <div ref={containerRef} className="relative flex h-full w-full items-stretch gap-1">
         <input
           ref={inputRef}
           value={inputValue}
@@ -130,33 +188,38 @@ export const ParameterValueEditor = forwardRef<ICellEditorComp, ParameterValueEd
             latestValueRef.current = event.target.value.trim();
           }}
           onKeyDown={(event) => {
-            if (event.key === "ArrowDown" && optionValues.length > 0) {
+            if (event.key === "ArrowDown" && availableOptions.length > 0) {
               event.preventDefault();
               setIsOptionsOpen(true);
             }
             if (event.key === "Enter") {
               event.preventDefault();
-              latestValueRef.current = inputRef.current?.value.trim() ?? "";
-              stopEditing?.();
+              const outcome = attemptCommit(event.currentTarget.value, "keyboard");
+              if (outcome.applied) {
+                closeEditor();
+              }
             }
             if (event.key === "Escape") {
               event.preventDefault();
               setIsOptionsOpen(false);
-              stopEditing?.(true);
+              closeEditor();
             }
           }}
           className="h-full w-full rounded border border-border bg-background px-2 text-sm focus-visible:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           placeholder="Enter value"
           aria-autocomplete="list"
           onBlur={(event) => {
-            latestValueRef.current = event.target.value.trim();
+            const outcome = attemptCommit(event.target.value, "blur");
+            if (outcome.applied) {
+              closeEditor();
+            }
           }}
         />
-        {optionValues.length > 0 ? (
+        {availableOptions.length > 0 ? (
           <>
             <button
               type="button"
-              className="flex h-full w-9 items-center justify-center rounded border border-border bg-muted text-muted-foreground transition-colors hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="flex h-full items-center justify-center rounded border border-border bg-muted px-2 text-muted-foreground transition-colors hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               onMouseDown={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
@@ -171,21 +234,19 @@ export const ParameterValueEditor = forwardRef<ICellEditorComp, ParameterValueEd
             {isOptionsOpen ? (
               <ul
                 role="listbox"
-                className="absolute right-0 top-full z-30 mt-1 w-56 max-h-60 overflow-auto rounded-md border border-border/60 bg-popover py-1 text-sm shadow-lg"
+                className="absolute left-0 top-full z-30 mt-1 max-h-60 overflow-auto rounded-md border border-border/60 bg-popover py-1 text-sm shadow-lg"
+                style={{ minWidth: dropdownWidth }}
               >
-                {optionValues.map((option) => (
+                {availableOptions.map((option) => (
                   <li key={option}>
                     <button
                       type="button"
                       role="option"
-                      className="flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left text-foreground transition-colors hover:bg-muted/80"
+                      className="flex w-full items-center justify-start gap-2 px-2 py-1.5 text-left text-foreground transition-colors hover:bg-muted/80"
                       onMouseDown={(event) => event.preventDefault()}
                       onClick={() => handleOptionSelect(option)}
                     >
                       <span>{option}</span>
-                      {option === inputValue ? (
-                        <span className="text-xs text-muted-foreground">Selected</span>
-                      ) : null}
                     </button>
                   </li>
                 ))}

@@ -53,18 +53,19 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(50.384% 0.29377 285.384);
+  --primary: #9e48e7; 				/* Not oklch(50.384% 0.29377 285.384) */
   --primary-foreground: oklch(0.985 0.02 305);
   --secondary: oklch(0.96 0.02 305);
   --secondary-foreground: oklch(0.28 0.06 305);
   --muted: oklch(0.95 0.01 305);
-  --muted-foreground: oklch(0.52 0.03 305);
-  --accent: oklch(0.59 0.23 305);
+  --muted-foreground: color-mix(in srgb, var(--foreground) 70%, transparent);
+  --accent: #9e48e7;
   --accent-foreground: oklch(0.985 0.02 305);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.59 0.23 305);
+  --ring: #9e48e7;
+  --subtle-foreground: color-mix(in srgb, var(--muted-foreground) 80%, transparent);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -87,18 +88,19 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: rgb(86, 14, 255);
+  --primary: #9e48e7;
   --primary-foreground: oklch(0.17 0.06 305);
   --secondary: oklch(0.28 0.02 305);
   --secondary-foreground: oklch(0.92 0.03 305);
   --muted: oklch(0.28 0.015 305);
-  --muted-foreground: oklch(0.76 0.04 305);
-  --accent: rgb(106, 0, 255);
+  --muted-foreground: color-mix(in srgb, var(--foreground) 60%, transparent);
+  --accent: #9e48e7;
   --accent-foreground: oklch(0.17 0.06 305);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.73 0.12 305);
+  --subtle-foreground: color-mix(in srgb, var(--muted-foreground) 80%, transparent);
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -120,6 +122,12 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .text-subtle {
+    color: var(--subtle-foreground);
   }
 }
 
@@ -156,11 +164,23 @@
   --ag-floating-filter-button-active-background-color: color-mix(in srgb, var(--accent) 28%, transparent);
   --ag-pinned-column-background-color: color-mix(in srgb, var(--card) 92%, transparent);
   --ag-header-column-separator-color: color-mix(in srgb, var(--border) 75%, transparent);
+  --ag-tooltip-background-color: color-mix(in srgb, var(--muted) 80%, var(--card) 20%);
+  --ag-tooltip-foreground-color: var(--foreground);
+  --ag-tooltip-border-color: color-mix(in srgb, var(--border) 65%, transparent);
   --ag-header-height: 42px;
   --ag-floating-filter-height: 42px;
   --ag-floating-filters-height: 42px;
   --ag-wrapper-border-radius: var(--radius-md);
   --ag-widget-container-horizontal-padding: 0.75rem;
+}
+
+.ag-theme-quartz .ag-tooltip,
+.ag-theme-quartz-dark .ag-tooltip {
+  background-color: var(--ag-tooltip-background-color) !important;
+  color: var(--ag-tooltip-foreground-color) !important;
+  border: 1px solid var(--ag-tooltip-border-color) !important;
+  font-weight: 600;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--foreground) 10%, transparent);
 }
 
 .ag-theme-quartz .ag-root-wrapper,
@@ -239,7 +259,7 @@
 
 .ag-theme-quartz .ag-floating-filter-input input::placeholder,
 .ag-theme-quartz-dark .ag-floating-filter-input input::placeholder {
-  color: color-mix(in srgb, var(--muted-foreground) 80%, transparent);
+  color: var(--subtle-foreground);
 }
 
 .column-toggle-checkbox {

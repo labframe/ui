@@ -29,7 +29,7 @@ export function Providers({ children }: { children: ReactNode }) {
       <QueryClientProvider client={client}>
         {children}
         {process.env.NODE_ENV === "development" ? (
-          <ReactQueryDevtools initialIsOpen={false} position="bottom-right" />
+          <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-right" />
         ) : null}
       </QueryClientProvider>
     </ThemeProvider>

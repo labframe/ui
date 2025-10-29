@@ -62,9 +62,15 @@ export async function fetchSamples(
   return payload;
 }
 
+export interface SampleParameterAssignment {
+  name: string;
+  value: string | number | boolean;
+  unitSymbol?: string | null;
+}
+
 export interface UpdateSampleParametersArgs {
   sampleId: number;
-  parameters: Record<string, string>;
+  assignments: SampleParameterAssignment[];
 }
 
 interface RecordParametersResponse {
@@ -73,14 +79,19 @@ interface RecordParametersResponse {
 
 export async function updateSampleParameters(
   sampleId: number,
-  parameters: Record<string, string>,
+  assignments: SampleParameterAssignment[],
 ): Promise<SampleListItem> {
   const payload = {
-    parameters: Object.entries(parameters).map(([name, value]) => ({
-      name,
-      value,
-      unit_symbol: null,
-    })),
+    parameters: assignments.map((assignment) => {
+      const entry: Record<string, unknown> = {
+        name: assignment.name,
+        value: assignment.value,
+      };
+      if (assignment.unitSymbol != null) {
+        entry.unit_symbol = assignment.unitSymbol;
+      }
+      return entry;
+    }),
   };
 
   const response = await fetch(`/api/samples/${sampleId}/parameters`, {
