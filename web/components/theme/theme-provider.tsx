@@ -30,19 +30,20 @@ function getSystemTheme(): ResolvedTheme {
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [preference, setPreference] = useState<ThemePreference>("system");
-  const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(() => getSystemTheme());
+function readStoredPreference(): ThemePreference {
+  if (typeof window === "undefined") {
+    return "system";
+  }
+  const stored = window.localStorage.getItem(STORAGE_KEY) as ThemePreference | null;
+  if (stored === "light" || stored === "dark" || stored === "system") {
+    return stored;
+  }
+  return "system";
+}
 
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-    const stored = window.localStorage.getItem(STORAGE_KEY) as ThemePreference | null;
-    if (stored === "light" || stored === "dark" || stored === "system") {
-      setPreference(stored);
-    }
-  }, []);
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [preference, setPreference] = useState<ThemePreference>(() => readStoredPreference());
+  const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(() => getSystemTheme());
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -52,10 +53,24 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const handleChange = (event: MediaQueryListEvent) => {
       setSystemTheme(event.matches ? "dark" : "light");
     };
-
-    setSystemTheme(mediaQuery.matches ? "dark" : "light");
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== STORAGE_KEY) {
+        return;
+      }
+      setPreference(readStoredPreference());
+    };
+
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
   }, []);
 
   useEffect(() => {

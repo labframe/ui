@@ -44,7 +44,7 @@ export function ThemeToggle() {
     <div ref={containerRef} className="relative">
       <button
         type="button"
-        className="flex h-9 items-center gap-1 rounded border border-border bg-muted px-3 py-2 text-sm font-medium"
+        className="flex h-9 items-center gap-1 rounded border border-border bg-muted px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted/90 active:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         onClick={() => setIsOpen((previous) => !previous)}

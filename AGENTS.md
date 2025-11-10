@@ -3,9 +3,8 @@
 ## Scope and Ownership
 
 - Covers everything inside this `ui/` repository.
-- Ships the Next.js front-end, the local FastAPI bridge, and supporting
-  assets.
-- Deploy target is a browser-based UI hitting a local FastAPI instance via
+- Ships the Next.js front-end and supporting assets.
+- Deploy target is a browser-based UI hitting a FastAPI instance (separate `api/` repository) via
   Next.js rewrites.
 
 ## Local Environment
@@ -14,8 +13,8 @@
   version 20).
 - From `ui/web/`: `npm install`, then `npm run dev` (rewrites `/api/*` to
   FastAPI on `http://localhost:8000`).
-- FastAPI server lives under `ui/api/`; run with
-  `uvicorn labframe_api.app:app --reload` using the shared thesis venv
+- FastAPI server lives in the separate `api/` repository; run with
+  `cd ../api && uvicorn labframe_api.app:app --reload --port 8000` using the shared thesis venv
   (`~/Backend/python/venv/thesis/`).
 - Lint with `npm run lint`. React Query Devtools are enabled in development
   (bottom-right toggle).
@@ -28,8 +27,6 @@
   - `components/`: UI primitives
     - `samples/`: samples grid (using AG Grid library)
   - `lib/`: REST client wrappers and React Query hooks.
-- `api/`: FastAPI layer bundling the core service (`labframe_core`).
-- `db/`: Local SQLite snapshot used by FastAPI (not served by Next.js).
 
 ## Persistence Trace (Samples Grid)
 
@@ -40,7 +37,7 @@
       `applyCandidate` callback on Enter, blur (when the dropdown is
       closed), or option click. Escape closes without committing.
 
-1. **Grid-level commit (UI):** `applyParameterCandidate` in
+2. **Grid-level commit (UI):** `applyParameterCandidate` in
    `web/components/samples/samples-page.tsx`
 
     - Validates and normalises the candidate against its
@@ -50,7 +47,7 @@
       logging reports skips (empty, invalid, no-change) versus accepted
       edits.
 
-1. **Assignment + mutation dispatch (UI):** `commitParameterEdit` in
+3. **Assignment + mutation dispatch (UI):** `commitParameterEdit` in
    `samples-page.tsx`
 
     - Uses `buildAssignments` to assemble the payload
@@ -58,46 +55,46 @@
     - Calls `useUpdateSampleParameters.mutate({ sampleId, assignments })`;
       verbose logs stay behind the `NODE_ENV !== "production"` guard.
 
-1. **React Query data layer:** `web/lib/hooks/use-samples.ts`
+4. **React Query data layer:** `web/lib/hooks/use-samples.ts`
 
     - `useUpdateSampleParameters` sends the mutation and invalidates the
       `"samples"` query key so downstream readers refetch.
 
-1. **HTTP client (UI → API):** `web/lib/api.ts::updateSampleParameters`
+5. **HTTP client (UI → API):** `web/lib/api.ts::updateSampleParameters`
 
     - Issues `POST /api/samples/{sampleId}/parameters` with
       `{ parameters: [...] }`.
     - Runs in the browser; the Next.js dev rewrite proxies calls to FastAPI.
 
-1. **Edge rewrite:** `web/next.config.ts`
+6. **Edge rewrite:** `web/next.config.ts`
 
     - Proxies `/api/*` to `http://localhost:8000/*` during development.
 
-1. **FastAPI bridge:** `ui/api/labframe_api/app.py::record_parameters`
+7. **FastAPI bridge:** `api/src/labframe_api/app.py::record_parameters`
 
     - Validates the request (`RecordParametersPayload`) and calls
       `SampleService.record_parameters` from `labframe_core`.
 
-1. **Application service (core):**
+8. **Application service (core):**
    `core/src/labframe_core/app/samples/services.py`
 
     - Opens a Unit of Work, converts DTOs to domain types, and invokes the
       domain use case.
 
-1. **Domain use case:**
+9. **Domain use case:**
    `core/src/labframe_core/domain/use_cases.py::record_sample_parameters`
 
     - Applies business rules, persists via repositories, and commits the
       Unit of Work.
 
-1. **Register/persistence layer:** `core/src/labframe_core/register`
+10. **Register/persistence layer:** `core/src/labframe_core/register`
 
     - `unit_of_work.py` coordinates the SQLAlchemy session and event
       dispatch.
     - `store.py::SampleRepository.record_parameters` performs the writes and
       raises domain events.
 
-1. **Result propagation:**
+11. **Result propagation:**
 
     - On mutation success, React Query refetches samples. AG Grid receives
       the updated `SampleListItem` list and renders edited parameters via the
@@ -133,7 +130,7 @@
    - Proxies `/api/*` requests to `http://localhost:8000/*` during
      development.
 6. **FastAPI Endpoint:**
-   - Module: `ui/api/labframe_api/app.py` (`record_parameters`).
+   - Module: `api/src/labframe_api/app.py` (`record_parameters`).
    - Validates payloads with Pydantic (`RecordParametersPayload`), then
      calls the bootstrapped `SampleService.record_parameters` from
      `labframe_core`.

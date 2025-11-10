@@ -3,12 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-  "dev": "node --require ./scripts/patch-node-util.js node_modules/next/dist/bin/next dev",
-  "build": "node --require ./scripts/patch-node-util.js node_modules/next/dist/bin/next build",
-  "start": "node --require ./scripts/patch-node-util.js node_modules/next/dist/bin/next start",
+    "dev": "node --require ./scripts/patch-node-util.js node_modules/next/dist/bin/next dev",
+    "build": "node --require ./scripts/patch-node-util.js node_modules/next/dist/bin/next build",
+    "start": "node --require ./scripts/patch-node-util.js node_modules/next/dist/bin/next start",
     "lint": "eslint"
   },
   "dependencies": {
+    "@radix-ui/react-popover": "^1.1.15",
     "@radix-ui/react-slot": "^1.2.3",
     "@tanstack/react-query": "^5.90.5",
     "@tanstack/react-query-devtools": "^5.90.2",
@@ -16,9 +17,11 @@
     "ag-grid-react": "^34.3.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "lucide-react": "^0.548.0",
     "next": "16.0.0",
     "react": "19.2.0",
+    "react-day-picker": "^9.11.1",
     "react-dom": "19.2.0",
     "tailwind-merge": "^3.3.1"
   },

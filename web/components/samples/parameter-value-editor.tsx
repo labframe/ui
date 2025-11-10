@@ -4,13 +4,13 @@ import {
   forwardRef,
   useCallback,
   useEffect,
+  useEffectEvent,
   useImperativeHandle,
   useMemo,
   useRef,
   useState,
 } from "react";
 import type { ICellEditorComp, ICellEditorParams } from "ag-grid-community";
-import { ChevronsUpDown } from "lucide-react";
 
 type ParameterEditSource = "optionSelect" | "keyboard" | "blur";
 
@@ -23,10 +23,29 @@ type ApplyCandidateResult = {
 export interface ParameterValueEditorParams extends ICellEditorParams {
   values?: string[];
   applyCandidate?: (candidate: string, source: ParameterEditSource) => ApplyCandidateResult;
+  textAlign?: "left" | "right";
+  useTabularNumbers?: boolean;
+}
+
+export const CELL_HORIZONTAL_PADDING_PX = 14;
+const INPUT_HORIZONTAL_INSET_PX = CELL_HORIZONTAL_PADDING_PX;
+const INPUT_LEFT_PADDING_PX = Math.max(CELL_HORIZONTAL_PADDING_PX - 1, 0);
+const DROPDOWN_TEXT_OFFSET_PX = 1;
+
+const naturalStringCollator = typeof Intl !== "undefined" ? new Intl.Collator(undefined, { numeric: true, sensitivity: "base" }) : null;
+
+export function sortParameterValues(values: string[]): string[] {
+  if (!values.length) {
+    return [];
+  }
+  if (naturalStringCollator) {
+    return [...values].sort((a, b) => naturalStringCollator.compare(a, b));
+  }
+  return [...values].sort((a, b) => a.localeCompare(b));
 }
 
 export const ParameterValueEditor = forwardRef<ICellEditorComp, ParameterValueEditorParams>(
-  ({ value, values, stopEditing, eGridCell, applyCandidate }, ref) => {
+  ({ value, values, stopEditing, applyCandidate, textAlign = "left", useTabularNumbers = false }, ref) => {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const fallbackContainerRef = useRef<HTMLDivElement | null>(null);
     const inputRef = useRef<HTMLInputElement | null>(null);
@@ -41,7 +60,7 @@ export const ParameterValueEditor = forwardRef<ICellEditorComp, ParameterValueEd
           unique.add(normalized);
         }
       }
-      return Array.from(unique).sort((a, b) => a.localeCompare(b));
+      return sortParameterValues(Array.from(unique));
     }, [values]);
 
     const initialValue = typeof value === "string" ? value : value ?? "";
@@ -49,14 +68,22 @@ export const ParameterValueEditor = forwardRef<ICellEditorComp, ParameterValueEd
     const [isOptionsOpen, setIsOptionsOpen] = useState(false);
     const latestValueRef = useRef(initialValue.trim());
     const [dropdownWidth, setDropdownWidth] = useState<number | undefined>(undefined);
+    const trimmedInputValue = inputValue.trim();
     const availableOptions = useMemo(
-      () => optionValues.filter((option) => option !== latestValueRef.current),
-      [optionValues, inputValue],
+      () => optionValues.filter((option) => option !== trimmedInputValue),
+      [optionValues, trimmedInputValue],
     );
+    const openOptions = useCallback(() => {
+      setIsOptionsOpen(true);
+    }, []);
+
+    const syncInitialValue = useEffectEvent((nextValue: string) => {
+      setInputValue(nextValue);
+      latestValueRef.current = nextValue.trim();
+    });
 
     useEffect(() => {
-      setInputValue(initialValue);
-      latestValueRef.current = initialValue.trim();
+      syncInitialValue(initialValue);
     }, [initialValue]);
 
     const attemptCommit = useCallback(
@@ -80,36 +107,30 @@ export const ParameterValueEditor = forwardRef<ICellEditorComp, ParameterValueEd
       [applyCandidate],
     );
 
-    useImperativeHandle(ref, () => ({
-      getGui: () => {
-        if (containerRef.current) {
-          return containerRef.current;
-        }
-        if (!fallbackContainerRef.current) {
-          fallbackContainerRef.current = document.createElement("div");
-        }
-        return fallbackContainerRef.current;
-      },
-      getValue: () => latestValueRef.current,
-      afterGuiAttached: () => {
-        if (inputRef.current) {
-          inputRef.current.focus();
-          inputRef.current.select();
-        }
-      },
-      isCancelAfterEnd: () => false,
-    }));
-
-    useEffect(() => {
-      if (!eGridCell) {
-        return;
-      }
-      const previousOverflow = eGridCell.style.overflow;
-      eGridCell.style.overflow = "visible";
-      return () => {
-        eGridCell.style.overflow = previousOverflow;
-      };
-    }, [eGridCell]);
+    useImperativeHandle(
+      ref,
+      () => ({
+        getGui: () => {
+          if (containerRef.current) {
+            return containerRef.current;
+          }
+          if (!fallbackContainerRef.current) {
+            fallbackContainerRef.current = document.createElement("div");
+          }
+          return fallbackContainerRef.current;
+        },
+        getValue: () => latestValueRef.current,
+        afterGuiAttached: () => {
+          if (inputRef.current) {
+            inputRef.current.focus();
+            const length = inputRef.current.value.length;
+            inputRef.current.setSelectionRange(length, length);
+          }
+        },
+        isCancelAfterEnd: () => false,
+        openOptions,
+      }) as ICellEditorComp & { openOptions: () => void },
+    );
 
     useEffect(() => {
       if (!isOptionsOpen) {
@@ -147,7 +168,9 @@ export const ParameterValueEditor = forwardRef<ICellEditorComp, ParameterValueEd
         if (!containerRef.current) {
           return;
         }
-        setDropdownWidth(containerRef.current.getBoundingClientRect().width);
+        const { width } = containerRef.current.getBoundingClientRect();
+        const totalWidth = Math.max(0, width + INPUT_HORIZONTAL_INSET_PX + CELL_HORIZONTAL_PADDING_PX);
+        setDropdownWidth(totalWidth);
       };
 
       updateWidth();
@@ -179,7 +202,10 @@ export const ParameterValueEditor = forwardRef<ICellEditorComp, ParameterValueEd
     );
 
     return (
-      <div ref={containerRef} className="relative flex h-full w-full items-stretch gap-1">
+      <div
+        ref={containerRef}
+        className="relative flex h-full w-full items-stretch"
+      >
         <input
           ref={inputRef}
           value={inputValue}
@@ -194,6 +220,7 @@ export const ParameterValueEditor = forwardRef<ICellEditorComp, ParameterValueEd
             }
             if (event.key === "Enter") {
               event.preventDefault();
+              event.stopPropagation();
               const outcome = attemptCommit(event.currentTarget.value, "keyboard");
               if (outcome.applied) {
                 closeEditor();
@@ -205,9 +232,20 @@ export const ParameterValueEditor = forwardRef<ICellEditorComp, ParameterValueEd
               closeEditor();
             }
           }}
-          className="h-full w-full rounded border border-border bg-background px-2 text-sm focus-visible:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          className={`h-full w-full rounded-none border-0 bg-transparent text-sm focus-visible:outline-none focus-visible:ring-0 focus-visible:border-0 ${
+            textAlign === "right" ? `text-right ${useTabularNumbers ? "tabular-nums" : ""}`.trim() : "text-left"
+          }`}
           placeholder="Enter value"
           aria-autocomplete="list"
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: 0,
+            paddingLeft: `${CELL_HORIZONTAL_PADDING_PX}px`,
+            paddingRight: `${CELL_HORIZONTAL_PADDING_PX}px`,
+          }}
           onBlur={(event) => {
             const outcome = attemptCommit(event.target.value, "blur");
             if (outcome.applied) {
@@ -215,34 +253,26 @@ export const ParameterValueEditor = forwardRef<ICellEditorComp, ParameterValueEd
             }
           }}
         />
-        {availableOptions.length > 0 ? (
-          <>
-            <button
-              type="button"
-              className="flex h-full items-center justify-center rounded border border-border bg-muted px-2 text-muted-foreground transition-colors hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-              onMouseDown={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                setIsOptionsOpen((previous) => !previous);
-              }}
-              aria-haspopup="listbox"
-              aria-expanded={isOptionsOpen}
-            >
-              <ChevronsUpDown className="h-4 w-4" aria-hidden="true" />
-              <span className="sr-only">Toggle parameter suggestions</span>
-            </button>
-            {isOptionsOpen ? (
+        {isOptionsOpen && availableOptions.length > 0 ? (
               <ul
                 role="listbox"
-                className="absolute left-0 top-full z-30 mt-1 max-h-60 overflow-auto rounded-md border border-border/60 bg-popover py-1 text-sm shadow-lg"
-                style={{ minWidth: dropdownWidth }}
+                className="absolute left-0 top-full z-30 mt-2 max-h-60 overflow-auto rounded-md border border-border/60 bg-background py-1 text-sm shadow-lg"
+                style={{
+                  left: `-${INPUT_HORIZONTAL_INSET_PX}px`,
+                  width: dropdownWidth,
+                }}
               >
                 {availableOptions.map((option) => (
                   <li key={option}>
                     <button
                       type="button"
                       role="option"
-                      className="flex w-full items-center justify-start gap-2 px-2 py-1.5 text-left text-foreground transition-colors hover:bg-muted/80"
+                      aria-selected={false}
+                      className="flex w-full items-center justify-start gap-2 py-1.5 text-left text-foreground transition-colors hover:bg-muted/80"
+                      style={{
+                        paddingLeft: `${CELL_HORIZONTAL_PADDING_PX + DROPDOWN_TEXT_OFFSET_PX}px`,
+                        paddingRight: `${CELL_HORIZONTAL_PADDING_PX}px`,
+                      }}
                       onMouseDown={(event) => event.preventDefault()}
                       onClick={() => handleOptionSelect(option)}
                     >
@@ -251,8 +281,6 @@ export const ParameterValueEditor = forwardRef<ICellEditorComp, ParameterValueEd
                   </li>
                 ))}
               </ul>
-            ) : null}
-          </>
         ) : null}
       </div>
     );

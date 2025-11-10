@@ -53,18 +53,19 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: #9e48e7; 				/* Not oklch(50.384% 0.29377 285.384) */
+  --accent-hsl: 210 100% 50%; /* Default blue, overridden by SettingsProvider */
+  --primary: hsl(var(--accent-hsl));
   --primary-foreground: oklch(0.985 0.02 305);
   --secondary: oklch(0.96 0.02 305);
   --secondary-foreground: oklch(0.28 0.06 305);
   --muted: oklch(0.95 0.01 305);
   --muted-foreground: color-mix(in srgb, var(--foreground) 70%, transparent);
-  --accent: #9e48e7;
+  --accent: hsl(var(--accent-hsl));
   --accent-foreground: oklch(0.985 0.02 305);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: #9e48e7;
+  --ring: hsl(var(--accent-hsl));
   --subtle-foreground: color-mix(in srgb, var(--muted-foreground) 80%, transparent);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
@@ -88,18 +89,18 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: #9e48e7;
+  --primary: hsl(var(--accent-hsl));
   --primary-foreground: oklch(0.17 0.06 305);
   --secondary: oklch(0.28 0.02 305);
   --secondary-foreground: oklch(0.92 0.03 305);
   --muted: oklch(0.28 0.015 305);
   --muted-foreground: color-mix(in srgb, var(--foreground) 60%, transparent);
-  --accent: #9e48e7;
+  --accent: hsl(var(--accent-hsl));
   --accent-foreground: oklch(0.17 0.06 305);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.73 0.12 305);
+  --ring: hsl(var(--accent-hsl));
   --subtle-foreground: color-mix(in srgb, var(--muted-foreground) 80%, transparent);
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
@@ -129,6 +130,84 @@
   .text-subtle {
     color: var(--subtle-foreground);
   }
+}
+
+/* Text size classes */
+.text-size-compact {
+  --text-base-size: 0.875rem;
+  --text-sm-size: 0.75rem;
+  --text-xs-size: 0.6875rem;
+  --spacing-scale: 0.875;
+}
+
+.text-size-compact body {
+  font-size: var(--text-base-size);
+  line-height: 1.4;
+}
+
+.text-size-compact .text-sm {
+  font-size: var(--text-sm-size);
+}
+
+.text-size-compact .text-xs {
+  font-size: var(--text-xs-size);
+}
+
+.text-size-compact h1 {
+  font-size: 1.75rem;
+  line-height: 1.2;
+}
+
+.text-size-compact h2 {
+  font-size: 1.5rem;
+  line-height: 1.3;
+}
+
+.text-size-compact h3 {
+  font-size: 1.25rem;
+  line-height: 1.4;
+}
+
+.text-size-normal {
+  --text-base-size: 1rem;
+  --text-sm-size: 0.875rem;
+  --text-xs-size: 0.75rem;
+  --spacing-scale: 1;
+}
+
+.text-size-comfortable {
+  --text-base-size: 1.125rem;
+  --text-sm-size: 1rem;
+  --text-xs-size: 0.875rem;
+  --spacing-scale: 1.125;
+}
+
+.text-size-comfortable body {
+  font-size: var(--text-base-size);
+  line-height: 1.6;
+}
+
+.text-size-comfortable .text-sm {
+  font-size: var(--text-sm-size);
+}
+
+.text-size-comfortable .text-xs {
+  font-size: var(--text-xs-size);
+}
+
+.text-size-comfortable h1 {
+  font-size: 2.25rem;
+  line-height: 1.2;
+}
+
+.text-size-comfortable h2 {
+  font-size: 1.875rem;
+  line-height: 1.3;
+}
+
+.text-size-comfortable h3 {
+  font-size: 1.5rem;
+  line-height: 1.4;
 }
 
 .ag-theme-quartz,
@@ -272,4 +351,388 @@
 .ag-theme-quartz-dark .ag-header-group-cell {
   background-color: inherit;
   color: inherit;
+}
+
+.ag-theme-quartz,
+.ag-theme-quartz-dark {
+  --samples-cell-padding-x: 14px;
+  --ag-cell-horizontal-padding: var(--samples-cell-padding-x);
+  --ag-header-cell-horizontal-padding: 0;
+}
+
+/* Base columns get default padding */
+.ag-theme-quartz .ag-cell,
+.ag-theme-quartz-dark .ag-cell {
+  padding-left: var(--samples-cell-padding-x);
+  padding-right: var(--samples-cell-padding-x);
+  border-radius: 0;
+  outline: none;
+  background-color: transparent;
+}
+
+/* Headers: default to 14px padding (parameter columns override via headerStyle) */
+.ag-theme-quartz .ag-header-cell,
+.ag-theme-quartz-dark .ag-header-cell {
+  padding-left: var(--samples-cell-padding-x);
+  padding-right: var(--samples-cell-padding-x);
+}
+
+.ag-theme-quartz .ag-cell-value,
+.ag-theme-quartz-dark .ag-cell-value {
+  text-overflow: clip;
+}
+
+.ag-theme-quartz .ag-cell.text-left .ag-cell-value,
+.ag-theme-quartz-dark .ag-cell.text-left .ag-cell-value,
+.ag-theme-quartz .ag-cell.text-left,
+.ag-theme-quartz-dark .ag-cell.text-left {
+  text-align: left;
+}
+
+.ag-theme-quartz .ag-cell.text-right .ag-cell-value,
+.ag-theme-quartz-dark .ag-cell.text-right .ag-cell-value,
+.ag-theme-quartz .ag-cell.text-right,
+.ag-theme-quartz-dark .ag-cell.text-right {
+  text-align: right;
+}
+
+.ag-theme-quartz .parameter-value-grid-cell,
+.ag-theme-quartz-dark .parameter-value-grid-cell {
+  overflow: visible;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+
+/* Cell focus border - always use thick border (consistent across all focus states) */
+.ag-theme-quartz .ag-cell.ag-cell-focus,
+.ag-theme-quartz-dark .ag-cell.ag-cell-focus {
+  outline: 2px solid var(--ag-input-focus-border-color, rgba(59, 130, 246, 0.6));
+  outline-offset: -1px;
+  border-radius: 0;
+  box-shadow: none;
+  background-color: transparent;
+}
+
+/* Ensure all cell focus states use the same thick border */
+.ag-theme-quartz .ag-cell:focus,
+.ag-theme-quartz-dark .ag-cell:focus,
+.ag-theme-quartz .ag-cell:focus-visible,
+.ag-theme-quartz-dark .ag-cell:focus-visible {
+  outline: 2px solid var(--ag-input-focus-border-color, rgba(59, 130, 246, 0.6)) !important;
+  outline-offset: -1px;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.ag-theme-quartz .ag-cell.ag-cell-range-selected,
+.ag-theme-quartz-dark .ag-cell.ag-cell-range-selected {
+  background-color: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+/* Inline editing cells - keep focus border but remove extra styling */
+.ag-theme-quartz .ag-cell.ag-cell-inline-editing,
+.ag-theme-quartz-dark .ag-cell.ag-cell-inline-editing {
+  background-color: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  /* Keep the focus border from .ag-cell-focus if present */
+}
+
+/* Remove rounded borders and focus rings from input fields inside editing cells */
+/* This removes border #4 (the input field's focus ring with rounded corners) */
+.ag-theme-quartz .ag-cell.ag-cell-inline-editing input,
+.ag-theme-quartz-dark .ag-cell.ag-cell-inline-editing input,
+.ag-theme-quartz .ag-cell.ag-cell-inline-editing *,
+.ag-theme-quartz-dark .ag-cell.ag-cell-inline-editing * {
+  border-radius: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Ensure no rounded wrapper appears behind cell text during editing */
+/* This removes border #3 (the subtle rounded border wrapper) */
+.ag-theme-quartz .ag-cell.ag-cell-inline-editing::before,
+.ag-theme-quartz-dark .ag-cell.ag-cell-inline-editing::before,
+.ag-theme-quartz .ag-cell.ag-cell-inline-editing::after,
+.ag-theme-quartz-dark .ag-cell.ag-cell-inline-editing::after {
+  display: none !important;
+  content: none !important;
+  border-radius: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+.ag-theme-quartz .ag-cell.ag-selection-checkbox,
+.ag-theme-quartz-dark .ag-cell.ag-selection-checkbox,
+.ag-theme-quartz .ag-cell.ag-selection-checkbox::before,
+.ag-theme-quartz-dark .ag-cell.ag-selection-checkbox::before,
+.ag-theme-quartz .ag-cell.ag-selection-checkbox::after,
+.ag-theme-quartz-dark .ag-cell.ag-selection-checkbox::after {
+  padding-left: var(--samples-cell-padding-x) !important;
+  padding-right: 0 !important;
+  margin: 0 !important;
+  cursor: default;
+  justify-content: flex-end;
+  /* Prevent focus borders and layout shifts */
+  outline: none !important;
+  outline-width: 0 !important;
+  outline-offset: 0 !important;
+  outline-style: none !important;
+  outline-color: transparent !important;
+  border: none !important;
+  border-width: 0 !important;
+  border-style: none !important;
+  box-shadow: none !important;
+}
+
+.ag-theme-quartz .ag-header-cell.ag-selection-checkbox,
+.ag-theme-quartz-dark .ag-header-cell.ag-selection-checkbox {
+  padding-left: var(--samples-cell-padding-x) !important;
+  padding-right: 0 !important;
+  margin: 0 !important;
+  justify-content: flex-end;
+}
+
+/* Override general focus styles for checkbox cells - must come after .ag-cell.ag-cell-focus */
+/* Lock padding/margin to prevent layout shifts when cell is focused */
+.ag-theme-quartz .ag-cell.ag-selection-checkbox.ag-cell-focus,
+.ag-theme-quartz-dark .ag-cell.ag-selection-checkbox.ag-cell-focus,
+.ag-theme-quartz .ag-cell.ag-selection-checkbox:focus,
+.ag-theme-quartz-dark .ag-cell.ag-selection-checkbox:focus,
+.ag-theme-quartz .ag-cell.ag-selection-checkbox:focus-visible,
+.ag-theme-quartz-dark .ag-cell.ag-selection-checkbox:focus-visible,
+.ag-theme-quartz .ag-cell.ag-selection-checkbox:focus-within,
+.ag-theme-quartz-dark .ag-cell.ag-selection-checkbox:focus-within,
+.ag-theme-quartz .ag-cell.ag-selection-checkbox.ag-cell-focus:focus,
+.ag-theme-quartz-dark .ag-cell.ag-selection-checkbox.ag-cell-focus:focus,
+.ag-theme-quartz .ag-cell.ag-selection-checkbox.ag-cell-focus:focus-visible,
+.ag-theme-quartz-dark .ag-cell.ag-selection-checkbox.ag-cell-focus:focus-visible,
+.ag-theme-quartz .ag-cell.ag-selection-checkbox.ag-cell-focus:focus-within,
+.ag-theme-quartz-dark .ag-cell.ag-selection-checkbox.ag-cell-focus:focus-within {
+  padding-left: var(--samples-cell-padding-x) !important;
+  padding-right: 0 !important;
+  padding-top: inherit !important;
+  padding-bottom: inherit !important;
+  margin: 0 !important;
+  margin-top: 0 !important;
+  margin-right: 0 !important;
+  margin-bottom: 0 !important;
+  margin-left: 0 !important;
+  outline: none !important;
+  outline-width: 0 !important;
+  outline-style: none !important;
+  outline-color: transparent !important;
+  outline-offset: 0 !important;
+  border: none !important;
+  border-width: 0 !important;
+  border-style: none !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+}
+
+/* Remove focus borders from checkbox inputs and any wrappers */
+/* Target all possible checkbox selectors including those created by AG Grid */
+/* Catch-all for any focused element inside checkbox cells */
+.ag-theme-quartz .ag-cell.ag-selection-checkbox *:focus,
+.ag-theme-quartz-dark .ag-cell.ag-selection-checkbox *:focus,
+.ag-theme-quartz .ag-cell.ag-selection-checkbox *:focus-visible,
+.ag-theme-quartz-dark .ag-cell.ag-selection-checkbox *:focus-visible,
+.ag-theme-quartz .ag-header-cell.ag-selection-checkbox *:focus,
+.ag-theme-quartz-dark .ag-header-cell.ag-selection-checkbox *:focus,
+.ag-theme-quartz .ag-header-cell.ag-selection-checkbox *:focus-visible,
+.ag-theme-quartz-dark .ag-header-cell.ag-selection-checkbox *:focus-visible {
+  outline: none !important;
+  outline-width: 0 !important;
+  outline-style: none !important;
+  outline-color: transparent !important;
+  outline-offset: 0 !important;
+  box-shadow: none !important;
+  border: none !important;
+  border-width: 0 !important;
+  border-style: none !important;
+  border-color: transparent !important;
+}
+
+.ag-theme-quartz .ag-cell.ag-selection-checkbox input[type="checkbox"],
+.ag-theme-quartz-dark .ag-cell.ag-selection-checkbox input[type="checkbox"],
+.ag-theme-quartz .ag-header-cell.ag-selection-checkbox input[type="checkbox"],
+.ag-theme-quartz-dark .ag-header-cell.ag-selection-checkbox input[type="checkbox"],
+.ag-theme-quartz .ag-cell.ag-selection-checkbox input,
+.ag-theme-quartz-dark .ag-cell.ag-selection-checkbox input,
+.ag-theme-quartz .ag-header-cell.ag-selection-checkbox input,
+.ag-theme-quartz-dark .ag-header-cell.ag-selection-checkbox input,
+.ag-theme-quartz .ag-cell.ag-selection-checkbox input[type="checkbox"]:focus,
+.ag-theme-quartz-dark .ag-cell.ag-selection-checkbox input[type="checkbox"]:focus,
+.ag-theme-quartz .ag-cell.ag-selection-checkbox input:focus,
+.ag-theme-quartz-dark .ag-cell.ag-selection-checkbox input:focus,
+.ag-theme-quartz .ag-cell.ag-selection-checkbox input[type="checkbox"]:focus-visible,
+.ag-theme-quartz-dark .ag-cell.ag-selection-checkbox input[type="checkbox"]:focus-visible,
+.ag-theme-quartz .ag-cell.ag-selection-checkbox input:focus-visible,
+.ag-theme-quartz-dark .ag-cell.ag-selection-checkbox input:focus-visible,
+.ag-theme-quartz .ag-cell.ag-selection-checkbox input[type="checkbox"]:focus-within,
+.ag-theme-quartz-dark .ag-cell.ag-selection-checkbox input[type="checkbox"]:focus-within,
+.ag-theme-quartz .ag-cell.ag-selection-checkbox input:focus-within,
+.ag-theme-quartz-dark .ag-cell.ag-selection-checkbox input:focus-within,
+.ag-theme-quartz .ag-cell.ag-selection-checkbox input[type="checkbox"]:active,
+.ag-theme-quartz-dark .ag-cell.ag-selection-checkbox input[type="checkbox"]:active,
+.ag-theme-quartz .ag-cell.ag-selection-checkbox input:active,
+.ag-theme-quartz-dark .ag-cell.ag-selection-checkbox input:active,
+.ag-theme-quartz .ag-header-cell.ag-selection-checkbox input[type="checkbox"]:focus,
+.ag-theme-quartz-dark .ag-header-cell.ag-selection-checkbox input[type="checkbox"]:focus,
+.ag-theme-quartz .ag-header-cell.ag-selection-checkbox input:focus,
+.ag-theme-quartz-dark .ag-header-cell.ag-selection-checkbox input:focus,
+.ag-theme-quartz .ag-header-cell.ag-selection-checkbox input[type="checkbox"]:focus-visible,
+.ag-theme-quartz-dark .ag-header-cell.ag-selection-checkbox input[type="checkbox"]:focus-visible,
+.ag-theme-quartz .ag-header-cell.ag-selection-checkbox input:focus-visible,
+.ag-theme-quartz-dark .ag-header-cell.ag-selection-checkbox input:focus-visible,
+.ag-theme-quartz .ag-header-cell.ag-selection-checkbox input[type="checkbox"]:focus-within,
+.ag-theme-quartz-dark .ag-header-cell.ag-selection-checkbox input[type="checkbox"]:focus-within,
+.ag-theme-quartz .ag-header-cell.ag-selection-checkbox input:focus-within,
+.ag-theme-quartz-dark .ag-header-cell.ag-selection-checkbox input:focus-within,
+.ag-theme-quartz .ag-header-cell.ag-selection-checkbox input[type="checkbox"]:active,
+.ag-theme-quartz-dark .ag-header-cell.ag-selection-checkbox input[type="checkbox"]:active,
+.ag-theme-quartz .ag-header-cell.ag-selection-checkbox input:active,
+.ag-theme-quartz-dark .ag-header-cell.ag-selection-checkbox input:active {
+  outline: none !important;
+  outline-width: 0 !important;
+  outline-style: none !important;
+  outline-color: transparent !important;
+  outline-offset: 0 !important;
+  border: none !important;
+  border-width: 0 !important;
+  border-style: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  margin: 0 !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  -webkit-focus-ring-color: transparent !important;
+}
+
+.ag-theme-quartz .ag-header-cell-resize,
+.ag-theme-quartz-dark .ag-header-cell-resize {
+  width: 12px;
+  right: -6px;
+}
+
+.ag-theme-quartz .ag-pinned-left-header,
+.ag-theme-quartz-dark .ag-pinned-left-header,
+.ag-theme-quartz .ag-pinned-left-cols-container,
+.ag-theme-quartz-dark .ag-pinned-left-cols-container {
+  border-right-color: var(--ag-border-color, rgba(148, 163, 184, 0.4));
+  box-shadow: none;
+}
+
+.ag-theme-quartz .ag-pinned-left-header .ag-header-cell-resize,
+.ag-theme-quartz-dark .ag-pinned-left-header .ag-header-cell-resize,
+.ag-theme-quartz .ag-pinned-left-cols-container .ag-cell-horizontal-resize,
+.ag-theme-quartz-dark .ag-pinned-left-cols-container .ag-cell-horizontal-resize {
+  opacity: 0;
+}
+
+/* Custom popup background for dropdowns and header popups */
+.custom-popup-bg {
+  background-color: #2D2D2D;
+}
+
+/* Toast slide-in with bounce animation */
+@keyframes slide-in-up-bounce {
+  0% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  50% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  65% {
+    transform: translateY(8px);
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-up-bounce {
+  animation: slide-in-up-bounce 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Faster popover animations */
+@keyframes popover-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes popover-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+[data-state="open"] {
+  animation: popover-in 0.1s ease-out;
+}
+
+[data-state="closed"] {
+  animation: popover-out 0.1s ease-in;
+}
+
+/* Calendar day alignment: days left-aligned, numbers right-aligned, both centered in columns */
+.rdp-head_cell {
+  text-align: left;
+  justify-content: center;
+}
+
+.rdp-day {
+  text-align: right;
+  justify-content: center;
+}
+
+.rdp-day > * {
+  width: 100%;
+  text-align: right;
+}
+
+/* Style native date picker calendar popup to match UI font */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  font-family: inherit;
+}
+
+input[type="date"]::-webkit-datetime-edit-text,
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field {
+  font-family: inherit;
+}
+
+/* For Firefox and other browsers, target the calendar popup */
+input[type="date"] {
+  font-family: inherit;
+}
+
+/* Style the native date picker calendar dropdown */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}
+
+/* Ensure calendar popup uses system font stack */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  font-family: var(--font-geist-sans, system-ui, -apple-system, sans-serif);
 }

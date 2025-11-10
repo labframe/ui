@@ -1,36 +1,134 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LabFrame UI (Web)
 
-## Getting Started
+Next.js-based web interface for the LabFrame laboratory information management system.
 
-First, run the development server:
+## Quick Start
 
 ```bash
+# Install dependencies
+npm install
+
+# Start development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Visit http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**Note:** The FastAPI backend must be running on port 8000 for the app to function.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Documentation
 
-## Learn More
+- **[Testing Guide](./docs/testing/README.md)** - Comprehensive testing documentation
+  - [AG Grid Testing](./docs/testing/AG-GRID-TESTING.md) - Grid alignment tests
+  - [CI/CD Setup](./docs/testing/CI-SETUP.md) - GitHub Actions workflow
 
-To learn more about Next.js, take a look at the following resources:
+## Scripts
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+# Development
+npm run dev          # Start dev server with hot reload
+npm run build        # Build for production
+npm run start        # Start production server
+npm run lint         # Run ESLint
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Testing
+npm test             # Component tests (watch mode)
+npm run test:run     # Component tests (single run)
+npm run test:coverage # Coverage report
+npm run test:e2e     # E2E tests (all browsers)
+npm run test:e2e:ui  # E2E tests (interactive)
+npm run test:all     # All tests
+```
 
-## Deploy on Vercel
+## Project Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+web/
+├── app/                    # Next.js app router
+├── components/             # React components
+│   ├── samples/           # Sample management UI
+│   └── ui/                # Reusable UI primitives
+├── lib/                    # Utilities and hooks
+│   ├── api.ts             # API client
+│   └── hooks/             # React Query hooks
+├── config/                 # Build and test configs
+│   ├── vitest.config.ts
+│   └── playwright.config.ts
+├── e2e/                    # Playwright E2E tests
+├── tests/                  # Vitest setup and fixtures
+│   ├── fixtures/          # Test data factories
+│   └── mocks/             # MSW API mocks
+└── docs/                   # Documentation
+    └── testing/           # Testing guides
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Tech Stack
+
+- **Framework:** Next.js 16 (React 19)
+- **UI:** Tailwind CSS + Radix UI primitives
+- **Data Grid:** AG Grid Community 34
+- **Data Fetching:** TanStack Query (React Query) v5
+- **Testing:**
+  - Vitest + React Testing Library (component tests)
+  - Playwright (E2E tests)
+  - MSW (API mocking)
+  - axe-core (accessibility)
+
+## Configuration
+
+Next.js rewrites `/api/*` requests to FastAPI backend during development:
+
+```typescript
+// next.config.ts
+rewrites: async () => [
+  {
+    source: '/api/:path*',
+    destination: 'http://localhost:8000/:path*',
+  },
+],
+```
+
+The FastAPI backend must be running:
+
+```bash
+cd ../api
+source ~/Backend/python/venv/thesis/bin/activate
+uvicorn labframe_api.app:app --reload
+```
+
+## Development
+
+### Adding a New Component
+
+1. Create component in `components/`
+2. Add test file next to it (e.g., `button.test.tsx`)
+3. Export from barrel file if needed
+
+### Adding a New API Endpoint
+
+1. Update `lib/api.ts` with new function
+2. Add React Query hook in `lib/hooks/`
+3. Add MSW handler in `tests/helpers/mocks/handlers.ts`
+4. Write tests
+
+### Running Tests
+
+```bash
+# Watch mode (TDD workflow)
+npm test
+
+# E2E with visual feedback
+npm run test:e2e:ui
+
+# Coverage report
+npm run test:coverage
+open coverage/index.html
+```
+
+See [Testing Guide](./docs/testing/README.md) for comprehensive documentation.
+
+## Related
+
+- [Core Package](../../core/) - Python backend engine
+- [API Bridge](../api/) - FastAPI REST API
+- [Documentation Site](../../docs/) - Full project documentation

@@ -1,25 +1,11 @@
 # LabFrame UI
 
-This repository hosts the in-progress web experience for LabFrame, powered by a
-FastAPI backend (`api/`) and a Next.js frontend (`web/`).
+This repository hosts the web experience for LabFrame, built with Next.js 15.
 
 ## Prerequisites
 
-- Python tooling must use the thesis virtual environment at `~/Backend/python/venv/thesis/`.
 - Node.js 20+ (Next.js 15 requires the active LTS release).
-- The `core/` repository must exist as a sibling so the API can import `labframe_core`.
-
-## Backend (FastAPI)
-
-```bash
-cd ui/api
-source ~/Backend/python/venv/thesis/bin/activate
-pip install -e .
-uvicorn labframe_api.app:app --reload --port 8000
-```
-
-The server uses `../db/database.sqlite` by default. Override with
-`LABFRAME_DB_PATH` when needed.
+- The `api/` repository must be running separately (see [LabFrame API](../api/README.md)).
 
 ## Frontend (Next.js 15)
 
@@ -40,8 +26,6 @@ While `npm run dev` is running, open <http://localhost:3000>. Requests to
 
 ## Linting
 
-- Backend:
-	`cd ui/api && source ~/Backend/python/venv/thesis/bin/activate && ruff check .`
 - Frontend: `cd ui/web && npm run lint`
 
 ## Next steps
