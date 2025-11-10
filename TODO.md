@@ -10,10 +10,6 @@
 ### Current Tasks
 
 #### GitHub
-- [ ] Set up API repo
-      - [ ] Create repo on github.com
-      - [ ] git init etc
-- [ ] Push repos
 
 #### Server
 - [ ] DO: Auth implementation
@@ -93,7 +89,7 @@
 	  - Alternatives?
     	- TanStack Table
     	- Anything else?
-- [ ] Migrate from React to SolidStart/SvelteKit?
+- [ ] Migrate from React to Solid
 
 #### UI
 - [ ] Button collapsing
